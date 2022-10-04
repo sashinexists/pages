@@ -125,20 +125,6 @@ impl El for Column {
     }
 }
 
-/// Creates a [`Column`] with the given children.
-///
-/// [`Column`]: widget::Column
-//code from rust discord user, don't know how it works
-#[macro_export]
-macro_rules! column {
-    () => (
-        $crate::widget::Column::new()
-    );
-    ($($x:expr),+ $(,)?) => (
-        $crate::widget::Column::with_children(vec![$($crate::Element::from($x)),+])
-    );
-}
-
 pub struct Text {
     content: String,
 }
