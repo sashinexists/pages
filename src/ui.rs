@@ -1,20 +1,36 @@
-#[derive(Clone)]
-pub enum Element {
-    Row(Row),
-    Column(Column),
-    Text(Text),
-    Link(Link),
-    Button(Button),
+pub struct Element {
+    element: Box<dyn El>,
+    classes: Vec<String>,
+    styles: Vec<Style>,
+    attributes: Vec<Attribute>,
 }
 
-impl El for Element {
+impl Element {
+    pub fn new(element: impl El + 'static) -> Self {
+        Self {
+            element: Box::new(element),
+            classes: Vec::new(),
+            styles: Vec::new(),
+            attributes: Vec::new(),
+            //change class to automatically use a uuid or something
+        }
+    }
+
     fn to_html(&self) -> String {
-        match self {
-            Element::Row(row) => row.to_html(),
-            Element::Column(column) => column.to_html(),
-            Element::Text(text) => text.to_html(),
-            Element::Link(link) => link.to_html(),
-            Element::Button(button) => button.to_html(),
+        self.element.to_html()
+    }
+}
+
+impl<T> From<T> for Element
+where
+    T: El + 'static,
+{
+    fn from(other: T) -> Self {
+        Self {
+            element: Box::new(other),
+            attributes: Vec::new(),
+            styles: Vec::new(),
+            classes: Vec::new(), //change class to automatically use a uuid or something
         }
     }
 }
@@ -68,129 +84,96 @@ pub struct Corners {
     bottom_right: u32,
 }
 
-#[derive(Clone)]
 pub struct Row {
     elements: Vec<Element>,
-    attributes: Vec<Attribute>,
-    class: Option<String>,
-    style: Vec<Style>,
 }
 
 impl El for Row {
     fn to_html(&self) -> String {
-        let class = match self.class.clone() {
-            Some(class) => class,
-            None => "".to_string(),
-        };
-
-        format!("<div class=\"row {}\"></div>", class)
+        let elements = self
+            .elements
+            .iter()
+            .fold("".to_string(), |acc, element| acc + &element.to_html());
+        format!("<div class={{classes}}>{elements}</div>")
     }
 }
 
-#[derive(Clone)]
 pub struct Column {
     elements: Vec<Element>,
-    attributes: Vec<Attribute>,
-    class: Option<String>,
-    styles: Vec<Style>,
 }
 
 impl Column {
     pub fn new() -> Self {
         Self {
             elements: Vec::new(),
-            attributes: Vec::new(),
-            class: None,
-            styles: Vec::new(),
         }
     }
 
-    pub fn push(self, element: Element) -> Self {
-        let mut elements = self.elements.clone();
-        elements.push(element);
-        Self { elements, ..self }
-    }
-    pub fn to_html(&self) -> String {
-        let class = match self.class.clone() {
-            Some(class) => class,
-            None => "".to_string(),
-        };
-
-        let elements = self
-            .elements
-            .iter()
-            .fold("".to_string(), |acc, element| acc + &element.to_html());
-
-        format!("<div class=\"column {}\">{}</div>", class, elements)
+    pub fn push(mut self, element: impl Into<Element>) -> Self {
+        self.elements.push(element.into());
+        self
     }
 }
 
 impl El for Column {
     fn to_html(&self) -> String {
-        let class = match self.class.clone() {
-            Some(class) => class,
-            None => "".to_string(),
-        };
-
-        format!("<div class=\"column {}\"></div>", class)
+        let elements = self
+            .elements
+            .iter()
+            .fold("".to_string(), |acc, element| acc + &element.to_html());
+        format!("<div class={{classes}}>{}</div>", elements)
     }
 }
 
-#[derive(Clone)]
+/// Creates a [`Column`] with the given children.
+///
+/// [`Column`]: widget::Column
+//code from rust discord user, don't know how it works
+#[macro_export]
+macro_rules! column {
+    () => (
+        $crate::widget::Column::new()
+    );
+    ($($x:expr),+ $(,)?) => (
+        $crate::widget::Column::with_children(vec![$($crate::Element::from($x)),+])
+    );
+}
+
 pub struct Text {
     content: String,
-    attributes: Vec<Attribute>,
-    class: Option<String>,
-    styles: Vec<Style>,
 }
 
 impl Text {
     pub fn new(content: &str) -> Self {
         Self {
             content: content.to_string(),
-            attributes: Vec::new(),
-            class: None,
-            styles: Vec::new(),
         }
     }
 }
 
 impl El for Text {
     fn to_html(&self) -> String {
-        let class = match self.class.clone() {
-            Some(class) => class,
-            None => "".to_string(),
-        };
-        format!("<span class=\"{}\">{}</span>", class, self.content).to_string()
+        format!("<span class={{classes}}>{}</span>", self.content).to_string()
     }
 }
-#[derive(Clone)]
 pub struct Button {
-    label: Box<Element>,
+    label: Element,
     on_press: String, //change this to a Message
-    class: Option<String>,
 }
 
 impl El for Button {
     fn to_html(&self) -> String {
-        let class = match self.class.clone() {
-            Some(class) => class,
-            None => "".to_string(),
-        };
         format!(
-            "<button href=\"{}\" class=\"{}\">{}</button>",
+            "<button href=\"{}\" class={{classes}}>{}</button>",
             self.on_press,
-            class,
             self.label.to_html()
         )
         .to_string()
     }
 }
-#[derive(Clone)]
 pub struct Link {
     label: Box<Element>,
     target: String, //change this to a url, can be relative or absolute
-    class: Option<String>,
 }
 
 // You should read about traits and see if they can have fields not just functions
@@ -200,14 +183,9 @@ pub trait El {
 
 impl El for Link {
     fn to_html(&self) -> String {
-        let class = match self.class.clone() {
-            Some(class) => class,
-            None => "".to_string(),
-        };
         format!(
-            "<a href=\"{}\" class=\"{}\">{}</a>",
+            "<a href=\"{}\" class={{classes}}>{}</a>",
             self.target,
-            class,
             self.label.to_html()
         )
         .to_string()
