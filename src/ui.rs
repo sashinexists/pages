@@ -11,7 +11,8 @@ pub struct Element {
 impl Element{ 
 
     pub fn to_html(&self) -> String {
-        self.content.to_html().replace("{{styles}}", &self.get_inline_style_string())
+        println!("{}",&self.get_inline_style_string());
+        self.content.to_html().replace("~~styles~~", &self.get_inline_style_string())
     }
 
     fn get_inline_style_string(&self)->String {
@@ -126,12 +127,12 @@ impl Style {
         match self{
             Self::Rounded(px) => format!("border-radius:{}px; ", px),
             Self::RoundedEach(corners) => format!("border-top-left-radius:{}px; border-top-right-radius:{}px; border-bottom-left-radius:{}px; border-bottom-right-radius:{}px; ", corners.top_left, corners.top_right, corners.bottom_left, corners.bottom_right),
-            Self::Margin(px) => format!("margin: {}px; ", px),
+            Self::Margin(px) => format!("margin:{}px; ", px),
             Self::MarginEach(sides) => format!("margin-top:{}px; margin-bottom:{}px; margin-right:{}px; margin-left:{}px; ", sides.top, sides.bottom, sides.right, sides.left),
-            Self::Padding(px) => format!("padding: {}px; ", px),
-            Self::PaddingEach(sides) => format!("padding-top: {}px; padding-bottom: {}px; padding-right: {}px; padding-left: {}px; ", sides.top, sides.bottom, sides.right, sides.left),
-            Self::BackgroundColor(color) => format!("background-color: {}; ", color.to_string()),
-            Self::TextColor(color) => format!("color: {}; ", color.to_string())
+            Self::Padding(px) => format!("padding:{}px; ", px),
+            Self::PaddingEach(sides) => format!("padding-top:{}px; padding-bottom:{}px; padding-right:{}px; padding-left:{}px; ", sides.top, sides.bottom, sides.right, sides.left),
+            Self::BackgroundColor(color) => format!("background-color:{}; ", color.to_string()),
+            Self::TextColor(color) => format!("color:{}; ", color.to_string())
             
             
         }
@@ -248,7 +249,7 @@ impl Text {
 impl El for Text {
     fn to_html(&self) -> String {
         format!(
-            "<span {{attributes}} class={{classes}} style={{styles}}>{}</span>",
+            "<span {{attributes}} class={{classes}} style=~~styles~~>{}</span>",
             self.content
         )
         .to_string()
@@ -292,4 +293,17 @@ impl El for Link {
         )
         .to_string()
     }
+}
+
+
+pub fn column()-> Element {
+    Column::new()
+}
+
+pub fn row() -> Element {
+    Row::new()
+}
+
+pub fn text(text:&str) -> Element {
+    Text::new(text)
 }
