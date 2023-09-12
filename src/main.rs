@@ -5,19 +5,30 @@ fn main() {
     let document = (Document::new("Test Page", "index.html"))
         .add_style(Style::BackgroundColor(colors::RICH_BLACK))
         .add_style(Style::Margin(Unit::Px(0)))
-        .add_style(Style::Padding(Unit::Px(0)))
+        .add_style(Style::PaddingEach(Sides::new(
+            Unit::Px(10),
+            Unit::Px(20),
+            Unit::Px(20),
+            Unit::Px(20),
+        )))
         .add_style(Style::Width(Unit::Percent(100.0)))
-        .add_style(Style::Font("Ubuntu".to_string()));
+        .add_style(Style::Font("Ubuntu".to_string()))
+        .add_style(Style::TextColor(colors::DARK_MEDIUM_GRAY));
 
     let page_title: Element = heading(HeadingLevel::H1, "Sashin Exists")
         .add_style(Style::FontWeight(FontWeight::Light))
         .add_style(Style::TextColor(colors::MIDDLE_GREEN))
         .add_style(Style::FontSize(Unit::Px(36)));
-
-    let page_header: Element = row().push(page_title).push(Text::new("About"));
+    let mut main = column().add_style(Style::Center);
+    let page_header: Element = row()
+        .add_style(Style::SpaceBetween)
+        .add_style(Style::Padding(Unit::Px(15)))
+        .add_style(Style::Height(Unit::Px(50)))
+        .push(page_title)
+        .push(row().push(Text::new("About")));
 
     let content = column()
-        .add_style(Style::Width(Unit::Percent(90.0)))
+        .add_style(Style::Width(Unit::Px(900)))
         .add_style(Style::Center)
         .add_style(Style::BackgroundColor(colors::EERIE_BLACK))
         .add_style(Style::TextColor(colors::DARK_MEDIUM_GRAY))
@@ -29,7 +40,9 @@ fn main() {
         .push(row().push(text("is").add_style(Style::BackgroundColor(Color::new(0, 0, 200, 1.0)))))
         .push(row().push(text("chara").add_style(Style::TextColor(Color::new(250, 0, 0, 1.0)))));
 
-    let document = document.push(page_header).push(content);
+    let main = main.push(page_header).push(content).push(column());
+
+    let document = document.push(main);
 
     dbg!(&document);
     document.write();
@@ -72,9 +85,9 @@ impl Document {
     fn get_inline_style_string(&self) -> String {
         self.styles
             .iter()
-            .fold(String::new(), |style_string, style| {
-                style_string + &style.to_string()
-            })
+            .map(|style| style.to_string())
+            .collect::<Vec<String>>()
+            .join("")
     }
 
     fn get_elements_html(&self) -> String {
@@ -101,7 +114,7 @@ impl Document {
     <meta charset=\"UTF-8\">
     <title>{}</title>
 </head>
-<body style=\"{}\">
+<body style=\"box-sizing:border-box;{}\">
 {}
 </body>
 </html>",

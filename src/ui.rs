@@ -19,9 +19,9 @@ impl Element {
         self.meta
             .styles
             .iter()
-            .fold(String::new(), |style_string, style| {
-                style_string + &style.to_string()
-            })
+            .map(|style| style.to_string())
+            .collect::<Vec<String>>()
+            .join("")
     }
 
     pub fn push(&mut self, element: Element) -> Self {
@@ -129,6 +129,7 @@ pub enum Style {
     Font(String),
     FontWeight(FontWeight),
     FontSize(Unit),
+    SpaceBetween,
 }
 
 impl Style {
@@ -147,7 +148,8 @@ impl Style {
             Self::Width(unit) => format!("width:{unit};" ),
             Self::Font(font) => format!("font-family:{font};"),
             Self::FontWeight(weight)=> format!("font-weight:{weight};"),
-            Self::FontSize(size) => format!("font-size:{size};")
+            Self::FontSize(size) => format!("font-size:{size};"),
+            Self::SpaceBetween => format!("justify-content:space-between;")
         }
     }
 }
@@ -188,6 +190,16 @@ pub struct Sides {
     right: Unit,
 }
 
+impl Sides {
+    pub fn new(top: Unit, bottom: Unit, left: Unit, right: Unit) -> Self {
+        Self {
+            top,
+            bottom,
+            left,
+            right,
+        }
+    }
+}
 #[derive(Clone, Debug)]
 pub struct Corners {
     top_left: Unit,
@@ -231,6 +243,7 @@ pub struct Row {
 }
 
 impl Row {
+    pub const DEFAULT_STYLES: &str = "display:flex;flex-flow:row nowrap;align-items:center;";
     pub fn new() -> Element {
         Element {
             content: ElementContent::Row(Self {
@@ -251,8 +264,13 @@ impl El for Row {
         let elements = self
             .elements
             .iter()
-            .fold("".to_string(), |acc, element| acc + &element.to_html());
-        format!("<div {{attributes}} class={{classes}} style=~~styles~~>{elements}</div>")
+            .map(|element| element.to_html())
+            .collect::<Vec<String>>()
+            .join("");
+        format!(
+            "<div {{attributes}} class={{classes}} style=\"{}~~styles~~\">{elements}</div>",
+            Row::DEFAULT_STYLES
+        )
     }
 }
 
@@ -262,6 +280,7 @@ pub struct Column {
 }
 
 impl Column {
+    pub const DEFAULT_STYLES: &str = "display:flex;flex-flow:column nowrap;";
     pub fn new() -> Element {
         Element {
             content: ElementContent::Column(Self {
@@ -282,8 +301,13 @@ impl El for Column {
         let elements = self
             .elements
             .iter()
-            .fold("".to_string(), |acc, element| acc + &element.to_html());
-        format!("<div {{attributes}} class={{classes}} style=~~styles~~>{elements}</div>")
+            .map(|element| element.to_html())
+            .collect::<Vec<String>>()
+            .join("");
+        format!(
+            "<div {{attributes}} class={{classes}} style=\'{}~~styles~~\'>{elements}</div>",
+            Column::DEFAULT_STYLES
+        )
     }
 }
 
