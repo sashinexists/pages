@@ -360,6 +360,18 @@ pub struct Link {
     target: String, //change this to a url, can be relative or absolute
 }
 
+impl Link {
+    pub fn new(label: Element, target: &str) -> Element {
+        Element {
+            content: ElementContent::Link(Self {
+                label: Box::new(label),
+                target: target.to_string(),
+            }),
+            meta: ElementMetaData::new(),
+        }
+    }
+}
+
 // You should read about traits and see if they can have fields not just functions
 pub trait El: Debug {
     fn to_html(&self) -> String;
@@ -476,4 +488,8 @@ pub fn text(text: &str) -> Element {
 
 pub fn heading(level: HeadingLevel, text: &str) -> Element {
     Heading::new(level, text)
+}
+
+pub fn link(label: Element, path: &str) -> Element {
+    Link::new(label, path)
 }

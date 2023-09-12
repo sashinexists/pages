@@ -2,7 +2,9 @@ use std::fs;
 mod ui;
 use ui::*;
 fn main() {
-    let document = (Document::new("Test Page", "index.html"))
+    let mut pages = Pages::new();
+
+    let home = (Document::new("Test Page", "index.html"))
         .add_style(Style::BackgroundColor(colors::RICH_BLACK))
         .add_style(Style::Margin(Unit::Px(0)))
         .add_style(Style::PaddingEach(Sides::new(
@@ -15,17 +17,25 @@ fn main() {
         .add_style(Style::Font("Ubuntu".to_string()))
         .add_style(Style::TextColor(colors::DARK_MEDIUM_GRAY));
 
-    let page_title: Element = heading(HeadingLevel::H1, "Sashin Exists")
+    let page_title: Element = heading(HeadingLevel::H1, "Sashin Dev")
         .add_style(Style::FontWeight(FontWeight::Light))
         .add_style(Style::TextColor(colors::MIDDLE_GREEN))
         .add_style(Style::FontSize(Unit::Px(36)));
     let mut main = column().add_style(Style::Center);
     let page_header: Element = row()
         .add_style(Style::SpaceBetween)
-        .add_style(Style::Padding(Unit::Px(15)))
         .add_style(Style::Height(Unit::Px(50)))
         .push(page_title)
-        .push(row().push(Text::new("About")));
+        .push(
+            row()
+                .push(header_link("Past Work", "/past-work"))
+                .push(header_link("Skills", "/skills"))
+                .push(header_link("Testimonials", "/testimonials"))
+                .push(header_link("Writing", "/writing"))
+                .push(header_link("Now", "/now")),
+        )
+        .add_style(Style::Height(Unit::Percent(100.0)))
+        .add_style(Style::FontSize(Unit::Px(13)));
 
     let content = column()
         .add_style(Style::Width(Unit::Px(900)))
@@ -42,10 +52,27 @@ fn main() {
 
     let main = main.push(page_header).push(content).push(column());
 
-    let document = document.push(main);
+    let home = home.push(main);
+    pages.add(home);
+    pages.write();
+}
 
-    dbg!(&document);
-    document.write();
+#[derive(Debug, Clone)]
+struct Pages(Vec<Document>);
+
+impl Pages {
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    pub fn add(&mut self, page: Document) -> Self {
+        self.0.push(page);
+        self.clone()
+    }
+
+    pub fn write(&mut self) {
+        self.0.iter().for_each(|page| page.write());
+    }
 }
 
 //change this so the path isn't stored in a string but something more strict
@@ -126,6 +153,14 @@ impl Document {
 }
 
 // This is not a part of the actual framework, it's an example of the framework being used
+
+fn header_link(label: &str, target: &str) -> Element {
+    link(text(label), target)
+        .add_style(Style::Padding(Unit::Px(15)))
+        .add_style(Style::Height(Unit::Percent(100.0)))
+        .add_style(Style::TextColor(colors::DARK_MEDIUM_GRAY))
+}
+
 mod colors {
 
     use crate::Color; // if Color is defined in another module but in the same crate
