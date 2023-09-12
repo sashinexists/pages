@@ -10,7 +10,6 @@ pub struct Element {
 }
 impl Element {
     pub fn to_html(&self) -> String {
-        println!("{}", &self.get_inline_style_string());
         self.content
             .to_html()
             .replace("~~styles~~", &self.get_inline_style_string())
@@ -55,6 +54,7 @@ pub enum ElementContent {
     Row(Row),
     Text(Text),
     Link(Link),
+    Heading(Heading),
 }
 
 impl ElementContent {
@@ -64,6 +64,7 @@ impl ElementContent {
             Self::Row(row) => row.to_html(),
             Self::Text(text) => text.to_html(),
             Self::Link(link) => link.to_html(),
+            Self::Heading(heading) => heading.to_html(),
         }
     }
 }
@@ -125,6 +126,9 @@ pub enum Style {
     Center,
     Width(Unit),
     Height(Unit),
+    Font(String),
+    FontWeight(FontWeight),
+    FontSize(Unit),
 }
 
 impl Style {
@@ -140,37 +144,39 @@ impl Style {
             Self::TextColor(color) => format!("color:{};", color.to_string()),
             Self::Center => format!("margin:auto;"),
             Self::Height(unit) => format!("height:{unit};" ),
-            Self::Width(unit) => format!("width:{unit};" )
+            Self::Width(unit) => format!("width:{unit};" ),
+            Self::Font(font) => format!("font-family:{font};"),
+            Self::FontWeight(weight)=> format!("font-weight:{weight};"),
+            Self::FontSize(size) => format!("font-size:{size};")
         }
     }
 }
 //Obviously make this better, make it rgba if possible
-#[derive(Clone, Debug)]
-pub enum Color {
-    Red,
-    Blue,
-    Yellow,
-    Green,
-    Orange,
-    Purple,
-    Black,
-    White,
-    Grey,
+#[derive(Debug, Clone, Copy)]
+pub struct Color {
+    red: u8,
+    blue: u8,
+    green: u8,
+    alpha: f32,
+}
+impl Color {
+    pub const fn new(red: u8, green: u8, blue: u8, alpha: f32) -> Self {
+        Self {
+            red,
+            green,
+            blue,
+            alpha,
+        }
+    }
 }
 
-impl Color {
-    fn to_string(&self) -> String {
-        match self {
-            Self::Red => "red".to_owned(),
-            Self::Blue => "blue".to_owned(),
-            Self::Yellow => "yellow".to_owned(),
-            Self::Green => "green".to_owned(),
-            Self::Orange => "orange".to_owned(),
-            Self::Purple => "purple".to_owned(),
-            Self::Black => "black".to_owned(),
-            Self::White => "white".to_owned(),
-            Self::Grey => "grey".to_owned(),
-        }
+impl std::fmt::Display for Color {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "rgba({},{},{},{})",
+            self.red, self.green, self.blue, self.alpha
+        )
     }
 }
 
@@ -190,6 +196,35 @@ pub struct Corners {
     bottom_right: Unit,
 }
 
+#[derive(Clone, Debug)]
+pub enum FontWeight {
+    Thin,
+    ExtraLight,
+    Light,
+    Normal,
+    Medium,
+    SemiBold,
+    Bold,
+    ExtraBold,
+    Heavy,
+}
+
+impl std::fmt::Display for FontWeight {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let weight_str = match self {
+            FontWeight::Thin => "100",
+            FontWeight::ExtraLight => "200",
+            FontWeight::Light => "300",
+            FontWeight::Normal => "400",
+            FontWeight::Medium => "500",
+            FontWeight::SemiBold => "600",
+            FontWeight::Bold => "700",
+            FontWeight::ExtraBold => "800",
+            FontWeight::Heavy => "900",
+        };
+        write!(f, "{}", weight_str)
+    }
+}
 #[derive(Debug, Clone)]
 pub struct Row {
     elements: Vec<Element>,
@@ -317,18 +352,6 @@ impl El for Link {
     }
 }
 
-pub fn column() -> Element {
-    Column::new()
-}
-
-pub fn row() -> Element {
-    Row::new()
-}
-
-pub fn text(text: &str) -> Element {
-    Text::new(text)
-}
-
 #[derive(Debug, Clone)]
 pub enum Unit {
     Px(u32),
@@ -356,4 +379,77 @@ impl Unit {
             Unit::Percent(percent) => format!("{percent}%"),
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct Heading {
+    level: HeadingLevel,
+    content: String,
+}
+
+impl Heading {
+    pub fn new(level: HeadingLevel, text: &str) -> Element {
+        Element {
+            content: ElementContent::Heading(Heading {
+                level,
+                content: text.to_string(),
+            }),
+            meta: ElementMetaData::new(),
+        }
+    }
+    pub fn to_html(&self) -> String {
+        match self.level {
+            HeadingLevel::H1 => format!(
+                "<h1 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h1>",
+                self.content
+            ),
+            HeadingLevel::H2 => format!(
+                "<h2 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h2>",
+                self.content
+            ),
+            HeadingLevel::H3 => format!(
+                "<h3 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h3>",
+                self.content
+            ),
+            HeadingLevel::H4 => format!(
+                "<h4 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h4>",
+                self.content
+            ),
+            HeadingLevel::H5 => format!(
+                "<h5 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h5>",
+                self.content
+            ),
+            HeadingLevel::H6 => format!(
+                "<h6 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h6>",
+                self.content
+            ),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum HeadingLevel {
+    H1,
+    H2,
+    H3,
+    H4,
+    H5,
+    H6,
+}
+
+//functions to generate elements
+pub fn column() -> Element {
+    Column::new()
+}
+
+pub fn row() -> Element {
+    Row::new()
+}
+
+pub fn text(text: &str) -> Element {
+    Text::new(text)
+}
+
+pub fn heading(level: HeadingLevel, text: &str) -> Element {
+    Heading::new(level, text)
 }
