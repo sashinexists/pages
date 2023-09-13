@@ -5,14 +5,15 @@ pub struct PushError;
 
 #[derive(Debug, Clone)]
 pub struct Element {
-    content: ElementContent,
-    meta: ElementMetaData,
+    pub content: ElementContent,
+    pub meta: ElementMetaData,
 }
 impl Element {
     pub fn to_html(&self) -> String {
         self.content
             .to_html()
-            .replace("~~styles~~", &self.get_inline_style_string())
+            // .replace("~~styles~~", &self.get_inline_style_string())
+            .replace("~~classes~~", &self.get_utility_classes())
     }
 
     fn get_inline_style_string(&self) -> String {
@@ -22,6 +23,18 @@ impl Element {
             .map(|style| style.to_string())
             .collect::<Vec<String>>()
             .join("")
+    }
+
+    fn get_utility_classes(&self) -> String {
+        "'".to_string()
+            + &self
+                .meta
+                .styles
+                .iter()
+                .map(|style| style.to_utility_class())
+                .collect::<Vec<String>>()
+                .join(" ")
+            + "'"
     }
 
     pub fn push(&mut self, element: Element) -> Self {
@@ -71,9 +84,9 @@ impl ElementContent {
 
 #[derive(Debug, Clone)]
 pub struct ElementMetaData {
-    classes: Vec<String>,
-    styles: Vec<Style>,
-    attributes: Vec<Attribute>,
+    pub classes: Vec<String>,
+    pub styles: Vec<Style>,
+    pub attributes: Vec<Attribute>,
 }
 
 impl ElementMetaData {
@@ -141,8 +154,8 @@ impl Style {
             Self::MarginEach(sides) => format!("margin-top:{};margin-bottom:{};margin-right:{};margin-left:{};", sides.top, sides.bottom, sides.right, sides.left),
             Self::Padding(unit) => format!("padding:{unit};"),
             Self::PaddingEach(sides) => format!("padding-top:{};padding-bottom:{};padding-right:{};padding-left:{};", sides.top, sides.bottom, sides.right, sides.left),
-            Self::BackgroundColor(color) => format!("background-color:{};", color.to_string()),
-            Self::TextColor(color) => format!("color:{};", color.to_string()),
+            Self::BackgroundColor(color) => format!("background-color:{};", color),
+            Self::TextColor(color) => format!("color:{};", color),
             Self::Center => format!("margin:auto;"),
             Self::Height(unit) => format!("height:{unit};" ),
             Self::Width(unit) => format!("width:{unit};" ),
@@ -152,7 +165,37 @@ impl Style {
             Self::SpaceBetween => format!("justify-content:space-between;")
         }
     }
+    //get rid of this if you don't end up using utility classes
+    pub fn to_utility_class(&self) -> String {
+        match self {
+            Self::Rounded(unit) => format!("rounded-{}", unit.to_utility_string()),
+            Self::RoundedEach(corners) => format!(
+                "rounded-{}-{}-{}-{}",
+                corners.top_left, corners.top_right, corners.bottom_right, corners.bottom_left
+            ),
+            Self::Margin(unit) => format!("m-{}", unit.to_utility_string()),
+            Self::MarginEach(sides) => format!(
+                "m-{}-{}-{}-{}",
+                sides.top, sides.right, sides.bottom, sides.left
+            ),
+            Self::Padding(unit) => format!("p-{}", unit.to_utility_string()),
+            Self::PaddingEach(sides) => format!(
+                "p-{}-{}-{}-{}",
+                sides.top, sides.right, sides.bottom, sides.left
+            ),
+            Self::BackgroundColor(color) => format!("bg-{}", color.to_utility_string()),
+            Self::TextColor(color) => format!("text-{}", color.to_utility_string()),
+            Self::Center => format!("m-auto"),
+            Self::Height(unit) => format!("h-{}", unit.to_utility_string()),
+            Self::Width(unit) => format!("w-{}", unit.to_utility_string()),
+            Self::Font(font) => format!("font-{font}"),
+            Self::FontWeight(weight) => format!("font-{weight}"),
+            Self::FontSize(size) => format!("text-{size}"),
+            Self::SpaceBetween => format!("space-between"),
+        }
+    }
 }
+
 //Obviously make this better, make it rgba if possible
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
@@ -169,6 +212,14 @@ impl Color {
             blue,
             alpha,
         }
+    }
+
+    // get rid of the following if you end up not using utility classses
+    pub fn to_utility_string(&self) -> String {
+        format!(
+            "r{}-g{}-b{}-a{}",
+            self.red, self.green, self.blue, self.alpha
+        )
     }
 }
 
@@ -239,7 +290,7 @@ impl std::fmt::Display for FontWeight {
 }
 #[derive(Debug, Clone)]
 pub struct Row {
-    elements: Vec<Element>,
+    pub elements: Vec<Element>,
 }
 
 impl Row {
@@ -268,7 +319,7 @@ impl El for Row {
             .collect::<Vec<String>>()
             .join("");
         format!(
-            "<div {{attributes}} class={{classes}} style=\"{}~~styles~~\">{elements}</div>",
+            "<div {{attributes}} class=~~classes~~ style=\"{}~~styles~~\">{elements}</div>",
             Row::DEFAULT_STYLES
         )
     }
@@ -276,7 +327,7 @@ impl El for Row {
 
 #[derive(Debug, Clone)]
 pub struct Column {
-    elements: Vec<Element>,
+    pub elements: Vec<Element>,
 }
 
 impl Column {
@@ -305,7 +356,7 @@ impl El for Column {
             .collect::<Vec<String>>()
             .join("");
         format!(
-            "<div {{attributes}} class={{classes}} style=\'{}~~styles~~\'>{elements}</div>",
+            "<div {{attributes}} class=~~classes~~ style=\'{}~~styles~~\'>{elements}</div>",
             Column::DEFAULT_STYLES
         )
     }
@@ -330,7 +381,7 @@ impl Text {
 impl El for Text {
     fn to_html(&self) -> String {
         format!(
-            "<span {{attributes}} class={{classes}} style=~~styles~~>{}</span>",
+            "<span {{attributes}} class=~~classes~~ style=~~styles~~>{}</span>",
             self.content
         )
         .to_string()
@@ -346,7 +397,7 @@ pub struct Button {
 impl El for Button {
     fn to_html(&self) -> String {
         format!(
-            "<button href=\"{}\" {{attributes}} class={{classes}} style=~~styles~~>{}</button>",
+            "<button href=\"{}\" {{attributes}} class=~~classes~~ style=~~styles~~>{}</button>",
             self.on_press,
             self.label.to_html()
         )
@@ -380,7 +431,7 @@ pub trait El: Debug {
 impl El for Link {
     fn to_html(&self) -> String {
         format!(
-            "<a href=\"{}\" class={{classes}} style=~~styles~~ {{attributes}}>{}</a>",
+            "<a href=\"{}\" class=~~classes~~ style=~~styles~~ {{attributes}}>{}</a>",
             self.target,
             self.label.to_html()
         )
@@ -407,12 +458,12 @@ impl std::fmt::Display for Unit {
     }
 }
 impl Unit {
-    fn to_string(&self) -> String {
+    fn to_utility_string(&self) -> String {
         match self {
-            Unit::Px(px) => format!("{px}px"),
-            Unit::Em(em) => format!("{em}em"),
-            Unit::Rem(rem) => format!("{rem}rem"),
-            Unit::Percent(percent) => format!("{percent}%"),
+            Unit::Px(px) => format!("{px}-px"),
+            Unit::Em(em) => format!("{em}-em"),
+            Unit::Rem(rem) => format!("{rem}-rem"),
+            Unit::Percent(percent) => format!("{percent}-percent"),
         }
     }
 }
@@ -436,27 +487,27 @@ impl Heading {
     pub fn to_html(&self) -> String {
         match self.level {
             HeadingLevel::H1 => format!(
-                "<h1 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h1>",
+                "<h1 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h1>",
                 self.content
             ),
             HeadingLevel::H2 => format!(
-                "<h2 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h2>",
+                "<h2 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h2>",
                 self.content
             ),
             HeadingLevel::H3 => format!(
-                "<h3 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h3>",
+                "<h3 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h3>",
                 self.content
             ),
             HeadingLevel::H4 => format!(
-                "<h4 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h4>",
+                "<h4 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h4>",
                 self.content
             ),
             HeadingLevel::H5 => format!(
-                "<h5 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h5>",
+                "<h5 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h5>",
                 self.content
             ),
             HeadingLevel::H6 => format!(
-                "<h6 style=~~styles~~ classes={{classes}} attributes={{attributes}}>{}</h6>",
+                "<h6 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h6>",
                 self.content
             ),
         }

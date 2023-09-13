@@ -54,7 +54,8 @@ fn main() {
 
     let home = home.push(main);
     pages.add(home);
-    pages.write();
+    pages.write_html();
+    pages.write_css();
 }
 
 #[derive(Debug, Clone)]
@@ -70,8 +71,13 @@ impl Pages {
         self.clone()
     }
 
-    pub fn write(&mut self) {
-        self.0.iter().for_each(|page| page.write());
+    pub fn write_html(&mut self) {
+        self.0.iter().for_each(|page| page.write_html());
+    }
+
+    //this runs for each page, you will need to fix this when you have more pages
+    pub fn write_css(&mut self) {
+        self.0.iter().for_each(|page| page.write_css());
     }
 }
 
@@ -94,9 +100,15 @@ impl Document {
         }
     }
 
-    fn write(&self) {
+    fn write_html(&self) {
         fs::write(&self.path, self.to_html())
             .expect(&format!("Failed to write document to {}", &self.path));
+    }
+
+    fn write_css(&self) {
+        let stylesheet: Stylesheet = Stylesheet::from_document(self);
+        let css = stylesheet.to_css();
+        fs::write("style.css", css).expect(&format!("Failed to write stylesheet"));
     }
 
     fn push(mut self, element: Element) -> Self {
@@ -140,6 +152,7 @@ impl Document {
 <head>
     <meta charset=\"UTF-8\">
     <title>{}</title>
+    <link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">
 </head>
 <body style=\"box-sizing:border-box;{}\">
 {}
@@ -149,6 +162,95 @@ impl Document {
             self.get_inline_style_string(),
             self.get_elements_html()
         )
+    }
+}
+
+#[derive(Debug, Clone)]
+struct CSSRuleSet {
+    selector: String,
+    styles: Vec<Style>,
+}
+
+impl CSSRuleSet {
+    fn to_css(&self) -> String {
+        format!(
+            "{}{{{}}}",
+            ".".to_string() + &self.selector,
+            self.styles
+                .iter()
+                .map(|style| style.to_string())
+                .collect::<Vec<String>>()
+                .join("")
+        )
+    }
+
+    fn from_style(style: &Style) -> Self {
+        Self {
+            selector: style.to_utility_class(),
+            styles: vec![style.clone()],
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Stylesheet(Vec<CSSRuleSet>);
+
+impl Stylesheet {
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    pub fn to_css(&self) -> String {
+        self.0
+            .iter()
+            .map(|rule| rule.to_css())
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
+
+    pub fn from_document(document: &Document) -> Self {
+        document
+            .content
+            .iter()
+            .fold(Self::new(), |mut stylesheet, element| {
+                stylesheet
+                    .0
+                    .extend(Stylesheet::from_element(element, Stylesheet::new()).0);
+                stylesheet
+            })
+    }
+    // you are working through this now, get rid of the comment when you are done
+    fn from_element(element: &Element, mut reducer: Self) -> Self {
+        reducer.0.extend(
+            element
+                .meta
+                .styles
+                .iter()
+                .map(|style| CSSRuleSet::from_style(style)),
+        );
+        match element.content.clone() {
+            ElementContent::Column(column) => {
+                let element_stylesheet = column
+                    .elements
+                    .iter()
+                    .fold(Stylesheet::new(), |stylesheet, element| {
+                        Self::from_element(element, stylesheet)
+                    });
+                reducer.0.extend(element_stylesheet.0);
+                reducer
+            }
+            ElementContent::Row(row) => {
+                let element_stylesheet = row
+                    .elements
+                    .iter()
+                    .fold(Stylesheet::new(), |stylesheet, element| {
+                        Self::from_element(element, stylesheet)
+                    });
+                reducer.0.extend(element_stylesheet.0);
+                reducer
+            }
+            _ => reducer,
+        }
     }
 }
 
