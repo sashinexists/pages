@@ -1,5 +1,5 @@
 use std::{collections::HashMap, fmt::Debug};
-use crate::id;
+use crate::{id, html::Tag};
 #[derive(Debug)]
 pub struct PushError;
 
@@ -10,9 +10,6 @@ pub struct Element {
     pub meta: ElementMetaData,
 }
 impl Element {
-
-
-
     pub fn push(&mut self, element: Element) -> Self {
         match &mut self.content {
             ElementContent::Column(column) => {
@@ -36,6 +33,26 @@ impl Element {
         self.meta.add_styles(styles);
         self
     }
+
+    pub fn get_tag(&self)-> Tag{
+        match &self.content{
+            ElementContent::Column(_) => Tag::Div,
+            ElementContent::Row(_) => Tag::Div,
+            ElementContent::Text(_) => Tag::Span,
+            ElementContent::Link(_) => Tag::A,
+            ElementContent::Heading(heading) => {
+                match heading.level {
+                    HeadingLevel::H1 => Tag::H1,
+                    HeadingLevel::H2 => Tag::H2,
+                    HeadingLevel::H3 => Tag::H3,
+                    HeadingLevel::H4 => Tag::H4,
+                    HeadingLevel::H5 => Tag::H5,
+                    HeadingLevel::H6 => Tag::H6,
+                }
+            },
+            ElementContent::Image(_) => Tag::IMG,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -45,6 +62,7 @@ pub enum ElementContent {
     Text(Text),
     Link(Link),
     Heading(Heading),
+    Image(Image)
 }
 
 #[derive(Debug, Clone)]
@@ -116,6 +134,7 @@ pub enum Style {
     SpaceBetween,
     Column,
     Row,
+
 }
 
 impl Style {
@@ -422,6 +441,23 @@ impl Heading {
     }
 }
 
+
+#[derive(Debug, Clone)]
+pub struct Image;
+
+impl Image {
+    
+    pub fn new(src:&str, alt:&str) -> Element {
+        let mut meta = ElementMetaData::new();
+        meta.attributes.insert("src".to_string(), src.to_string());
+        meta.attributes.insert("alt".to_string(), alt.to_string());
+        Element {
+            id: format!("image-{}", id::generate()),
+            content: ElementContent::Image(Self),
+            meta,
+        }
+    }
+}
 #[derive(Debug, Clone)]
 pub enum HeadingLevel {
     H1,
@@ -464,3 +500,6 @@ pub fn link(label: Element, path: &str) -> Element {
     Link::new(label, path)
 }
 
+pub fn image(src:&str, attribute:&str) -> Element {
+    Image::new(src, attribute)
+}

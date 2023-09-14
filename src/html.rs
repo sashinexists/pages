@@ -1,5 +1,5 @@
 use crate::ui::{Element, ElementContent, HeadingLevel, Style};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -32,20 +32,21 @@ impl HtmlElement {
                 column
                     .elements
                     .iter()
-                    .map(|el| Self::from_element(el, Tag::Div))
+                    .map(|el| Self::from_element(el, el.get_tag()))
                     .collect(),
             ),
             ElementContent::Row(row) => HtmlInner::Children(
                 row.elements
                     .iter()
-                    .map(|el| Self::from_element(el, Tag::Div))
+                    .map(|el| Self::from_element(el, el.get_tag()))
                     .collect(),
             ),
             ElementContent::Text(text) => HtmlInner::Content(text.content.clone()),
             ElementContent::Link(link) => {
-                HtmlInner::Children(vec![Self::from_element(&link.label, Tag::A)])
+                HtmlInner::Children(vec![Self::from_element(&link.label, link.label.get_tag())])
             }
             ElementContent::Heading(heading) => HtmlInner::Content(heading.content.clone()),
+            ElementContent::Image(_) => HtmlInner::None,
         };
 
         Self {
@@ -236,6 +237,7 @@ impl Document {
                 ElementContent::Row(_) => Tag::Div,
                 ElementContent::Text(_) => Tag::Span,
                 ElementContent::Link(_) => Tag::A,
+                ElementContent::Image(_) => Tag::IMG,
                 ElementContent::Heading(heading) => match heading.level {
                     HeadingLevel::H1 => Tag::H1,
                     HeadingLevel::H2 => Tag::H2,
@@ -256,6 +258,7 @@ impl Document {
                 ElementContent::Row(_) => Tag::Div,
                 ElementContent::Text(_) => Tag::Span,
                 ElementContent::Link(_) => Tag::A,
+                ElementContent::Image(_) => Tag::IMG,
                 ElementContent::Heading(heading) => match heading.level {
                     HeadingLevel::H1 => Tag::H1,
                     HeadingLevel::H2 => Tag::H2,
@@ -265,9 +268,9 @@ impl Document {
                     HeadingLevel::H6 => Tag::H6,
                 },
             };
+            dbg!(&HtmlElement::from_element(element, tag.clone()));
             output + &HtmlElement::from_element(element, tag).write_html()
         });
-        dbg!(&html);
         html
     }
 
@@ -316,14 +319,6 @@ impl CSSRuleSet {
                 .collect::<Vec<String>>()
                 .join("")
         )
-    }
-
-    fn from_element(element: &Element) -> Self {
-        Self(element.id.to_string(), element.meta.styles.clone())
-    }
-
-    fn from_html_element(element: &HtmlElement) -> Self {
-        Self(element.id.to_string(), element.styles.clone())
     }
 }
 
@@ -422,89 +417,4 @@ impl Stylesheet {
             }
         }
     }
-    // fn from_html_element(element: &HtmlElement, mut reducer: Self) -> Self {
-    //     let selector = format!("#{}", element.id);
-    //     if let Some(existing_styles) = reducer.0.get_mut(&selector) {
-    //         existing_styles.extend(element.styles.clone());
-    //     } else {
-    //         reducer.0.insert(selector, element.styles.clone());
-    //     }
-
-    //     match &element.inner {
-    //         HtmlInner::Children(children) => {
-    //             let mut merged_stylesheet = Stylesheet::new();
-    //             for child in children {
-    //                 let child_stylesheet = Self::from_html_element(child, reducer.clone());
-    //                 for (key, value) in child_stylesheet.0 {
-    //                     merged_stylesheet
-    //                         .0
-    //                         .entry(key)
-    //                         .or_insert_with(Vec::new)
-    //                         .extend(value);
-    //                 }
-    //             }
-    //             merged_stylesheet
-    //         }
-    //         HtmlInner::Content(_) => reducer,
-    //         HtmlInner::None => reducer,
-    //     }
-    // }
 }
-
-//     fn from_html_element(element: &HtmlElement, mut reducer: Self) -> Self {
-//         reducer
-//             .0
-//             .insert("#".to_string() + &element.id.to_string(), element.styles)
-//             .expect("Failed to insert ({}, {}) into the stylesheet");
-//         match element.inner.clone() {
-//             HtmlInner::Children(children) => {
-//                 children
-//                     .iter()
-//                     .map(|child| Self::from_html_element(child, reducer ))
-//                     .collect::<Vec<Stylesheet>>()
-//                     .iter()
-//                 .fold(reducer, |mut output, stylesheet| {
-//                     stylesheet.0.iter().for_each(|(separator, styles)| {
-//                         reducer.0.insert(separator.clone(), styles.clone());
-//                         reducer
-//                     });
-//                 }
-//                 reducer
-//             }    ,
-//             HtmlInner::Content(_) => todo!(),
-//             HtmlInner::None => todo!(),
-// }
-// }
-// fn from_element(element: &Element, mut reducer: Self) -> Self {
-//     reducer.0.extend(
-//         element
-//             .meta
-//             .styles
-//             .iter()
-//             .map(|style| CSSRuleSet::from_style(style, element.id)),
-//     );
-//     match element.content.clone() {
-//         ElementContent::Column(column) => {
-//             let element_stylesheet = column
-//                 .elements
-//                 .iter()
-//                 .fold(Stylesheet::new(), |stylesheet, element| {
-//                     Self::from_element(element, stylesheet)
-//                 });
-//             reducer.0.extend(element_stylesheet.0);
-//             reducer
-//         }
-//         ElementContent::Row(row) => {
-//             let element_stylesheet = row
-//                 .elements
-//                 .iter()
-//                 .fold(Stylesheet::new(), |stylesheet, element| {
-//                     Self::from_element(element, stylesheet)
-//                 });
-//             reducer.0.extend(element_stylesheet.0);
-//             reducer
-//         }
-//         _ => reducer,
-//     }
-// }
-// }

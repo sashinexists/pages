@@ -43,6 +43,8 @@ fn main() {
         .add_style(Style::Height(Unit::Percent(100.0)))
         .add_style(Style::FontSize(Unit::Px(13)));
 
+    let banner = image("assets/banner.jpg", "Sashin Dev");
+
     let content = column()
         .add_style(Style::Width(Unit::Px(900)))
         .add_style(Style::Center)
@@ -56,11 +58,14 @@ fn main() {
         .push(row().push(text("is").add_style(Style::BackgroundColor(Color::new(0, 0, 200, 1.0)))))
         .push(row().push(text("chara").add_style(Style::TextColor(Color::new(250, 0, 0, 1.0)))));
 
-    let main = main.push(page_header).push(content).push(column());
+    let main = main
+        .push(page_header)
+        .push(banner)
+        .push(content)
+        .push(column());
 
     let home = home.push(main);
     pages.add(home);
     pages.write_html();
     pages.write_css();
-    dbg!(pages);
 }
