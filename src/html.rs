@@ -1,13 +1,14 @@
-use uuid::Uuid;
+use crate::ui::{Element, ElementContent, HeadingLevel, Style};
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::path::PathBuf;
 
-use crate::ui::{Element, ElementContent, Style};
-use std::collections::HashMap;
-
+#[derive(Debug, Clone)]
 pub struct HtmlElement {
     tag: Tag,
     attributes: HashMap<String, String>,
     classes: Vec<String>,
-    id: Uuid,
+    id: String,
     is_self_closing: bool,
     inner: HtmlInner,
     styles: Vec<Style>,
@@ -16,7 +17,7 @@ pub struct HtmlElement {
 impl HtmlElement {
     pub fn from_element(element: &Element, tag: Tag) -> Self {
         // Common properties
-        let id = element.id;
+        let id = element.id.clone();
         let classes = element.meta.classes.clone();
         let styles = element.meta.styles.clone();
         let attributes = element.meta.attributes.clone();
@@ -61,7 +62,7 @@ impl HtmlElement {
     pub fn write_html(&self) -> String {
         if self.is_self_closing {
             format!(
-                "<{} id=\"{}\" {} {}/>",
+                "<{} id='{}' {} {}/>",
                 self.tag,
                 self.id,
                 self.get_attribute_string(),
@@ -69,7 +70,7 @@ impl HtmlElement {
             )
         } else {
             format!(
-                "<{} id=\"{}\" {} {}>{}</{}>",
+                "<{} id='{}' {} {}>{}</{}>",
                 self.tag,
                 self.id,
                 self.get_attribute_string(),
@@ -80,19 +81,32 @@ impl HtmlElement {
         }
     }
 
+    pub fn write_css(&self) -> String {
+        self.build_stylesheet().to_css()
+    }
+
+    fn build_stylesheet(&self) -> Stylesheet {
+        Stylesheet::from_html_element(self)
+    }
+
     fn get_attribute_string(&self) -> String {
         self.attributes
             .iter()
-            .map(|(k, v)| format!("k=\"{v}\""))
+            .map(|(k, v)| format!("{k}='{v}'"))
             .collect::<Vec<String>>()
             .join(" ")
     }
 
     fn get_class_string(&self) -> String {
-        "class=\"".to_string() + &self.classes.join(" ") + "\""
+        if &self.classes.len() > &0 {
+            "class='".to_string() + &self.classes.join(" ") + "'"
+        } else {
+            String::new()
+        }
     }
 }
 
+#[derive(Debug, Clone)]
 enum HtmlInner {
     Children(Vec<HtmlElement>),
     Content(String),
@@ -113,6 +127,7 @@ impl HtmlInner {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum Tag {
     Div,
     Span,
@@ -142,3 +157,354 @@ impl std::fmt::Display for Tag {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct Pages(Vec<Document>);
+
+impl Pages {
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    pub fn add(&mut self, page: Document) -> Self {
+        self.0.push(page);
+        self.clone()
+    }
+
+    pub fn write_html(&mut self) {
+        self.0.iter().for_each(|page| page.write_html());
+    }
+
+    //this runs for each page, you will need to fix this when you have more pages
+    pub fn write_css(&mut self) {
+        self.0.iter().for_each(|page| page.write_css());
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Document {
+    title: String,
+    styles: Vec<Style>,
+    content: Vec<Element>,
+    path: PathBuf,
+}
+
+impl Document {
+    pub fn new(title: &str, path: &str) -> Self {
+        Self {
+            title: title.to_string(),
+            styles: Vec::new(),
+            content: Vec::new(),
+            path: PathBuf::from(path),
+        }
+    }
+
+    fn write_html(&self) {
+        fs::write(&self.path, self.to_html()).expect(&format!(
+            "Failed to write document to {}",
+            &self.path.display()
+        ));
+    }
+
+    fn write_css(&self) {
+        let css = self.get_css();
+        fs::write("style.css", css).expect(&format!("Failed to write stylesheet"));
+    }
+
+    pub fn push(mut self, element: Element) -> Self {
+        self.content.push(element);
+        self
+    }
+
+    pub fn push_elements(mut self, elements: Vec<Element>) -> Self {
+        self.content.extend(elements);
+        self
+    }
+
+    fn get_inline_style_string(&self) -> String {
+        self.styles
+            .iter()
+            .map(|style| style.to_string())
+            .collect::<Vec<String>>()
+            .join("")
+    }
+
+    fn get_css(&self) -> String {
+        self.content.iter().fold("".to_string(), |output, element| {
+            let tag: Tag = match &element.content {
+                ElementContent::Column(_) => Tag::Div,
+                ElementContent::Row(_) => Tag::Div,
+                ElementContent::Text(_) => Tag::Span,
+                ElementContent::Link(_) => Tag::A,
+                ElementContent::Heading(heading) => match heading.level {
+                    HeadingLevel::H1 => Tag::H1,
+                    HeadingLevel::H2 => Tag::H2,
+                    HeadingLevel::H3 => Tag::H3,
+                    HeadingLevel::H4 => Tag::H4,
+                    HeadingLevel::H5 => Tag::H5,
+                    HeadingLevel::H6 => Tag::H6,
+                },
+            };
+            output + &HtmlElement::from_element(element, tag).write_css()
+        })
+    }
+
+    fn get_elements_html(&self) -> String {
+        let html = self.content.iter().fold("".to_string(), |output, element| {
+            let tag: Tag = match &element.content {
+                ElementContent::Column(_) => Tag::Div,
+                ElementContent::Row(_) => Tag::Div,
+                ElementContent::Text(_) => Tag::Span,
+                ElementContent::Link(_) => Tag::A,
+                ElementContent::Heading(heading) => match heading.level {
+                    HeadingLevel::H1 => Tag::H1,
+                    HeadingLevel::H2 => Tag::H2,
+                    HeadingLevel::H3 => Tag::H3,
+                    HeadingLevel::H4 => Tag::H4,
+                    HeadingLevel::H5 => Tag::H5,
+                    HeadingLevel::H6 => Tag::H6,
+                },
+            };
+            output + &HtmlElement::from_element(element, tag).write_html()
+        });
+        dbg!(&html);
+        html
+    }
+
+    pub fn add_style(mut self, style: Style) -> Self {
+        self.styles.push(style);
+        self
+    }
+
+    pub fn add_styles(mut self, styles: Vec<Style>) -> Self {
+        self.styles.extend(styles);
+        self
+    }
+
+    fn to_html(&self) -> String {
+        format!(
+            "<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"UTF-8\">
+    <title>{}</title>
+    <link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">
+</head>
+<body style=\"box-sizing:border-box;{}\">
+{}
+</body>
+</html>",
+            self.title,
+            self.get_inline_style_string(),
+            self.get_elements_html()
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+struct CSSRuleSet(String, Vec<Style>);
+
+impl CSSRuleSet {
+    fn to_css(&self) -> String {
+        let (selector, styles) = (self.0.clone(), self.1.clone());
+        format!(
+            "{}{{{}}}",
+            selector,
+            styles
+                .iter()
+                .map(|style| style.to_string())
+                .collect::<Vec<String>>()
+                .join("")
+        )
+    }
+
+    fn from_element(element: &Element) -> Self {
+        Self(element.id.to_string(), element.meta.styles.clone())
+    }
+
+    fn from_html_element(element: &HtmlElement) -> Self {
+        Self(element.id.to_string(), element.styles.clone())
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Stylesheet(HashMap<String, Vec<Style>>);
+
+impl Stylesheet {
+    pub fn new() -> Self {
+        Self(HashMap::<String, Vec<Style>>::new())
+    }
+    //this is what you are up to, you just changed stylesheet to a hashmap and you're dealing with the fallout
+    pub fn to_css(&self) -> String {
+        self.0
+            .iter()
+            .map(|(selector, styles)| CSSRuleSet(selector.clone(), styles.clone()).to_css())
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
+
+    pub fn from_document(document: &Document) -> Self {
+        document
+            .content
+            .iter()
+            .fold(Self::new(), |mut stylesheet, element| {
+                stylesheet
+                    .0
+                    .extend(Stylesheet::from_element(element, Stylesheet::new()).0);
+                stylesheet
+            })
+    }
+    //This is what you are up to
+    fn from_element(element: &Element, mut reducer: Self) -> Self {
+        reducer
+            .0
+            .insert(
+                "#".to_string() + &element.id.to_string(),
+                element.meta.styles.clone(),
+            )
+            .expect("Failed to insert ({}, {}) into the stylesheet");
+        match element.content.clone() {
+            ElementContent::Column(column) => column
+                .elements
+                .iter()
+                .map(|el| Self::from_element(el, reducer.clone()))
+                .collect::<Vec<Stylesheet>>()
+                .iter()
+                .fold(reducer.clone(), |mut output, stylesheet| {
+                    stylesheet.0.iter().for_each(|(separator, styles)| {
+                        reducer.0.insert(separator.clone(), styles.clone());
+                    });
+                    reducer.clone()
+                }),
+
+            ElementContent::Row(row) => row
+                .elements
+                .iter()
+                .map(|el| Self::from_element(el, reducer.clone()))
+                .collect::<Vec<Stylesheet>>()
+                .iter()
+                .fold(reducer.clone(), |mut output, stylesheet| {
+                    stylesheet.0.iter().for_each(|(separator, styles)| {
+                        reducer.0.insert(separator.clone(), styles.clone());
+                    });
+                    reducer.clone()
+                }),
+            _ => reducer,
+        }
+    }
+
+    pub fn from_html_element(element: &HtmlElement) -> Self {
+        let mut sheet = Stylesheet::new();
+        Stylesheet::populate_from_element(&mut sheet, element);
+        sheet
+    }
+
+    fn populate_from_element(sheet: &mut Stylesheet, element: &HtmlElement) {
+        // Generate selector based on id
+        let selector = format!("#{}", element.id);
+
+        // Add or merge styles
+        let entry = sheet.0.entry(selector).or_insert_with(Vec::new);
+
+        for new_style in &element.styles {
+            let is_present = entry
+                .iter()
+                .any(|existing_style| existing_style.variant_eq(new_style));
+            if !is_present {
+                entry.push(new_style.clone());
+            }
+        }
+
+        // Recurse into children if any
+        if let HtmlInner::Children(children) = &element.inner {
+            for child in children {
+                Stylesheet::populate_from_element(sheet, child);
+            }
+        }
+    }
+    // fn from_html_element(element: &HtmlElement, mut reducer: Self) -> Self {
+    //     let selector = format!("#{}", element.id);
+    //     if let Some(existing_styles) = reducer.0.get_mut(&selector) {
+    //         existing_styles.extend(element.styles.clone());
+    //     } else {
+    //         reducer.0.insert(selector, element.styles.clone());
+    //     }
+
+    //     match &element.inner {
+    //         HtmlInner::Children(children) => {
+    //             let mut merged_stylesheet = Stylesheet::new();
+    //             for child in children {
+    //                 let child_stylesheet = Self::from_html_element(child, reducer.clone());
+    //                 for (key, value) in child_stylesheet.0 {
+    //                     merged_stylesheet
+    //                         .0
+    //                         .entry(key)
+    //                         .or_insert_with(Vec::new)
+    //                         .extend(value);
+    //                 }
+    //             }
+    //             merged_stylesheet
+    //         }
+    //         HtmlInner::Content(_) => reducer,
+    //         HtmlInner::None => reducer,
+    //     }
+    // }
+}
+
+//     fn from_html_element(element: &HtmlElement, mut reducer: Self) -> Self {
+//         reducer
+//             .0
+//             .insert("#".to_string() + &element.id.to_string(), element.styles)
+//             .expect("Failed to insert ({}, {}) into the stylesheet");
+//         match element.inner.clone() {
+//             HtmlInner::Children(children) => {
+//                 children
+//                     .iter()
+//                     .map(|child| Self::from_html_element(child, reducer ))
+//                     .collect::<Vec<Stylesheet>>()
+//                     .iter()
+//                 .fold(reducer, |mut output, stylesheet| {
+//                     stylesheet.0.iter().for_each(|(separator, styles)| {
+//                         reducer.0.insert(separator.clone(), styles.clone());
+//                         reducer
+//                     });
+//                 }
+//                 reducer
+//             }    ,
+//             HtmlInner::Content(_) => todo!(),
+//             HtmlInner::None => todo!(),
+// }
+// }
+// fn from_element(element: &Element, mut reducer: Self) -> Self {
+//     reducer.0.extend(
+//         element
+//             .meta
+//             .styles
+//             .iter()
+//             .map(|style| CSSRuleSet::from_style(style, element.id)),
+//     );
+//     match element.content.clone() {
+//         ElementContent::Column(column) => {
+//             let element_stylesheet = column
+//                 .elements
+//                 .iter()
+//                 .fold(Stylesheet::new(), |stylesheet, element| {
+//                     Self::from_element(element, stylesheet)
+//                 });
+//             reducer.0.extend(element_stylesheet.0);
+//             reducer
+//         }
+//         ElementContent::Row(row) => {
+//             let element_stylesheet = row
+//                 .elements
+//                 .iter()
+//                 .fold(Stylesheet::new(), |stylesheet, element| {
+//                     Self::from_element(element, stylesheet)
+//                 });
+//             reducer.0.extend(element_stylesheet.0);
+//             reducer
+//         }
+//         _ => reducer,
+//     }
+// }
+// }

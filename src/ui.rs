@@ -1,43 +1,17 @@
 use std::{collections::HashMap, fmt::Debug};
-use uuid::Uuid;
-
+use crate::id;
 #[derive(Debug)]
 pub struct PushError;
 
 #[derive(Debug, Clone)]
 pub struct Element {
-    pub id: Uuid,
+    pub id: String,
     pub content: ElementContent,
     pub meta: ElementMetaData,
 }
 impl Element {
-    pub fn to_html(&self) -> String {
-        self.content
-            .to_html()
-            // .replace("~~styles~~", &self.get_inline_style_string())
-            .replace("~~classes~~", &self.get_utility_classes())
-    }
 
-    fn get_inline_style_string(&self) -> String {
-        self.meta
-            .styles
-            .iter()
-            .map(|style| style.to_string())
-            .collect::<Vec<String>>()
-            .join("")
-    }
 
-    fn get_utility_classes(&self) -> String {
-        "'".to_string()
-            + &self
-                .meta
-                .styles
-                .iter()
-                .map(|style| style.to_utility_class())
-                .collect::<Vec<String>>()
-                .join(" ")
-            + "'"
-    }
 
     pub fn push(&mut self, element: Element) -> Self {
         match &mut self.content {
@@ -63,6 +37,7 @@ impl Element {
         self
     }
 }
+
 #[derive(Debug, Clone)]
 pub enum ElementContent {
     Column(Column),
@@ -70,18 +45,6 @@ pub enum ElementContent {
     Text(Text),
     Link(Link),
     Heading(Heading),
-}
-
-impl ElementContent {
-    fn to_html(&self) -> String {
-        match self {
-            Self::Column(column) => column.to_html(),
-            Self::Row(row) => row.to_html(),
-            Self::Text(text) => text.to_html(),
-            Self::Link(link) => link.to_html(),
-            Self::Heading(heading) => heading.to_html(),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -151,9 +114,14 @@ pub enum Style {
     FontWeight(FontWeight),
     FontSize(Unit),
     SpaceBetween,
+    Column,
+    Row,
 }
 
 impl Style {
+    pub fn variant_eq(&self, other: &Self) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
     pub fn to_string(&self) -> String {
         match self{
             Self::Rounded(unit) => format!("border-radius:{unit};"),
@@ -170,36 +138,10 @@ impl Style {
             Self::Font(font) => format!("font-family:{font};"),
             Self::FontWeight(weight)=> format!("font-weight:{weight};"),
             Self::FontSize(size) => format!("font-size:{size};"),
-            Self::SpaceBetween => format!("justify-content:space-between;")
-        }
-    }
-    //get rid of this if you don't end up using utility classes
-    pub fn to_utility_class(&self) -> String {
-        match self {
-            Self::Rounded(unit) => format!("rounded-{}", unit.to_utility_string()),
-            Self::RoundedEach(corners) => format!(
-                "rounded-{}-{}-{}-{}",
-                corners.top_left, corners.top_right, corners.bottom_right, corners.bottom_left
-            ),
-            Self::Margin(unit) => format!("m-{}", unit.to_utility_string()),
-            Self::MarginEach(sides) => format!(
-                "m-{}-{}-{}-{}",
-                sides.top, sides.right, sides.bottom, sides.left
-            ),
-            Self::Padding(unit) => format!("p-{}", unit.to_utility_string()),
-            Self::PaddingEach(sides) => format!(
-                "p-{}-{}-{}-{}",
-                sides.top, sides.right, sides.bottom, sides.left
-            ),
-            Self::BackgroundColor(color) => format!("bg-{}", color.to_utility_string()),
-            Self::TextColor(color) => format!("text-{}", color.to_utility_string()),
-            Self::Center => format!("m-auto"),
-            Self::Height(unit) => format!("h-{}", unit.to_utility_string()),
-            Self::Width(unit) => format!("w-{}", unit.to_utility_string()),
-            Self::Font(font) => format!("font-{font}"),
-            Self::FontWeight(weight) => format!("font-{weight}"),
-            Self::FontSize(size) => format!("text-{size}"),
-            Self::SpaceBetween => format!("space-between"),
+            Self::SpaceBetween => format!("justify-content:space-between;"),
+            Self::Column => format!("display:flex;flex-flow:column nowrap;align-items:center;"),
+            Self::Row=> format!("display:flex;flex-flow:row nowrap;align-items:center;")
+            
         }
     }
 }
@@ -302,35 +244,21 @@ pub struct Row {
 }
 
 impl Row {
-    pub const DEFAULT_STYLES: &str = "display:flex;flex-flow:row nowrap;align-items:center;";
     pub fn new() -> Element {
+        let mut meta = ElementMetaData::new();
+        meta.add_style(Style::Row);
         Element {
-            id: Uuid::new_v4(),
+            id: format!("row-{}",id::generate()),
             content: ElementContent::Row(Self {
                 elements: Vec::new(),
             }),
-            meta: ElementMetaData::new(),
+            meta,
         }
     }
 
     pub fn push(mut self, element: impl Into<Element>) -> Self {
         self.elements.push(element.into());
         self
-    }
-}
-
-impl El for Row {
-    fn to_html(&self) -> String {
-        let elements = self
-            .elements
-            .iter()
-            .map(|element| element.to_html())
-            .collect::<Vec<String>>()
-            .join("");
-        format!(
-            "<div {{attributes}} class=~~classes~~ style=\"{}~~styles~~\">{elements}</div>",
-            Row::DEFAULT_STYLES
-        )
     }
 }
 
@@ -340,14 +268,15 @@ pub struct Column {
 }
 
 impl Column {
-    pub const DEFAULT_STYLES: &str = "display:flex;flex-flow:column nowrap;";
     pub fn new() -> Element {
+        let mut meta = ElementMetaData::new();
+        meta.add_style(Style::Column);
         Element {
-            id: Uuid::new_v4(),
+            id: format!("column-{}", id::generate()),
             content: ElementContent::Column(Self {
                 elements: Vec::new(),
             }),
-            meta: ElementMetaData::new(),
+            meta,
         }
     }
 
@@ -357,20 +286,6 @@ impl Column {
     }
 }
 
-impl El for Column {
-    fn to_html(&self) -> String {
-        let elements = self
-            .elements
-            .iter()
-            .map(|element| element.to_html())
-            .collect::<Vec<String>>()
-            .join("");
-        format!(
-            "<div {{attributes}} class=~~classes~~ style=\'{}~~styles~~\'>{elements}</div>",
-            Column::DEFAULT_STYLES
-        )
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct Text {
@@ -380,7 +295,7 @@ pub struct Text {
 impl Text {
     pub fn new(content: &str) -> Element {
         Element {
-            id: Uuid::new_v4(),
+            id: format!("text-{}", id::generate()),
             content: ElementContent::Text(Self {
                 content: content.to_string(),
             }),
@@ -405,16 +320,6 @@ pub struct Button {
     on_press: String, //change this to a Message
 }
 
-impl El for Button {
-    fn to_html(&self) -> String {
-        format!(
-            "<button href=\"{}\" {{attributes}} class=~~classes~~ style=~~styles~~>{}</button>",
-            self.on_press,
-            self.label.to_html()
-        )
-        .to_string()
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct Link {
@@ -425,7 +330,7 @@ pub struct Link {
 impl Link {
     pub fn new(label: Element, target: &str) -> Element {
         Element {
-            id: Uuid::new_v4(),
+            id: format!("link-{}", id::generate()),
             content: ElementContent::Link(Self {
                 label: Box::new(label),
                 target: target.to_string(),
@@ -440,16 +345,6 @@ pub trait El: Debug {
     fn to_html(&self) -> String;
 }
 
-impl El for Link {
-    fn to_html(&self) -> String {
-        format!(
-            "<a href=\"{}\" class=~~classes~~ style=~~styles~~ {{attributes}}>{}</a>",
-            self.target,
-            self.label.to_html()
-        )
-        .to_string()
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum Unit {
@@ -489,7 +384,7 @@ pub struct Heading {
 impl Heading {
     pub fn new(level: HeadingLevel, text: &str) -> Element {
         Element {
-            id: Uuid::new_v4(),
+            id: format!("{}-{}",level, id::generate()),
             content: ElementContent::Heading(Heading {
                 level,
                 content: text.to_string(),
@@ -537,7 +432,18 @@ pub enum HeadingLevel {
     H6,
 }
 
-//functions to generate elements
+impl std::fmt::Display for HeadingLevel {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            HeadingLevel::H1 => write!(f, "h1"),
+            HeadingLevel::H2 => write!(f, "h2"),
+            HeadingLevel::H3 => write!(f, "h3"),
+            HeadingLevel::H4 => write!(f, "h4"),
+            HeadingLevel::H5 => write!(f, "h5"),
+            HeadingLevel::H6 => write!(f, "h6"),
+        }
+    }
+}//functions to generate elements
 pub fn column() -> Element {
     Column::new()
 }
@@ -557,3 +463,4 @@ pub fn heading(level: HeadingLevel, text: &str) -> Element {
 pub fn link(label: Element, path: &str) -> Element {
     Link::new(label, path)
 }
+
