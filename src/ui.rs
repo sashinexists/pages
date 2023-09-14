@@ -1,10 +1,12 @@
-use std::fmt::Debug;
+use std::{collections::HashMap, fmt::Debug};
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct PushError;
 
 #[derive(Debug, Clone)]
 pub struct Element {
+    pub id: Uuid,
     pub content: ElementContent,
     pub meta: ElementMetaData,
 }
@@ -86,7 +88,7 @@ impl ElementContent {
 pub struct ElementMetaData {
     pub classes: Vec<String>,
     pub styles: Vec<Style>,
-    pub attributes: Vec<Attribute>,
+    pub attributes: HashMap<String, String>,
 }
 
 impl ElementMetaData {
@@ -94,7 +96,7 @@ impl ElementMetaData {
         Self {
             classes: Vec::new(),
             styles: Vec::new(),
-            attributes: Vec::new(),
+            attributes: HashMap::<String, String>::new(),
         }
     }
 
@@ -108,6 +110,12 @@ impl ElementMetaData {
     pub fn add_styles(&mut self, styles: Vec<Style>) -> &mut Self {
         self.styles.extend(styles);
         self
+    }
+}
+
+impl Default for ElementMetaData {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -297,6 +305,7 @@ impl Row {
     pub const DEFAULT_STYLES: &str = "display:flex;flex-flow:row nowrap;align-items:center;";
     pub fn new() -> Element {
         Element {
+            id: Uuid::new_v4(),
             content: ElementContent::Row(Self {
                 elements: Vec::new(),
             }),
@@ -334,6 +343,7 @@ impl Column {
     pub const DEFAULT_STYLES: &str = "display:flex;flex-flow:column nowrap;";
     pub fn new() -> Element {
         Element {
+            id: Uuid::new_v4(),
             content: ElementContent::Column(Self {
                 elements: Vec::new(),
             }),
@@ -364,12 +374,13 @@ impl El for Column {
 
 #[derive(Debug, Clone)]
 pub struct Text {
-    content: String,
+    pub content: String,
 }
 
 impl Text {
     pub fn new(content: &str) -> Element {
         Element {
+            id: Uuid::new_v4(),
             content: ElementContent::Text(Self {
                 content: content.to_string(),
             }),
@@ -407,13 +418,14 @@ impl El for Button {
 
 #[derive(Debug, Clone)]
 pub struct Link {
-    label: Box<Element>,
+    pub label: Box<Element>,
     target: String, //change this to a url, can be relative or absolute
 }
 
 impl Link {
     pub fn new(label: Element, target: &str) -> Element {
         Element {
+            id: Uuid::new_v4(),
             content: ElementContent::Link(Self {
                 label: Box::new(label),
                 target: target.to_string(),
@@ -470,13 +482,14 @@ impl Unit {
 
 #[derive(Debug, Clone)]
 pub struct Heading {
-    level: HeadingLevel,
-    content: String,
+    pub level: HeadingLevel,
+    pub content: String,
 }
 
 impl Heading {
     pub fn new(level: HeadingLevel, text: &str) -> Element {
         Element {
+            id: Uuid::new_v4(),
             content: ElementContent::Heading(Heading {
                 level,
                 content: text.to_string(),

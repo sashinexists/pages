@@ -1,4 +1,7 @@
 use std::fs;
+use std::path::PathBuf;
+mod html;
+use html::*;
 mod ui;
 use ui::*;
 fn main() {
@@ -81,13 +84,12 @@ impl Pages {
     }
 }
 
-//change this so the path isn't stored in a string but something more strict
 #[derive(Debug, Clone)]
 struct Document {
     title: String,
     styles: Vec<Style>,
     content: Vec<Element>,
-    path: String,
+    path: PathBuf,
 }
 
 impl Document {
@@ -96,13 +98,15 @@ impl Document {
             title: title.to_string(),
             styles: Vec::new(),
             content: Vec::new(),
-            path: path.to_string(),
+            path: PathBuf::from(path),
         }
     }
 
     fn write_html(&self) {
-        fs::write(&self.path, self.to_html())
-            .expect(&format!("Failed to write document to {}", &self.path));
+        fs::write(&self.path, self.to_html()).expect(&format!(
+            "Failed to write document to {}",
+            &self.path.display()
+        ));
     }
 
     fn write_css(&self) {
@@ -130,8 +134,25 @@ impl Document {
     }
 
     fn get_elements_html(&self) -> String {
+        // self.content.iter().fold("".to_string(), |output, element| {
+        //     output + &element.to_html()
+        // })
         self.content.iter().fold("".to_string(), |output, element| {
-            output + &element.to_html()
+            let tag: Tag = match &element.content {
+                ElementContent::Column(_) => Tag::Div,
+                ElementContent::Row(_) => Tag::Div,
+                ElementContent::Text(_) => Tag::Span,
+                ElementContent::Link(_) => Tag::A,
+                ElementContent::Heading(heading) => match heading.level {
+                    HeadingLevel::H1 => Tag::H1,
+                    HeadingLevel::H2 => Tag::H2,
+                    HeadingLevel::H3 => Tag::H3,
+                    HeadingLevel::H4 => Tag::H4,
+                    HeadingLevel::H5 => Tag::H5,
+                    HeadingLevel::H6 => Tag::H6,
+                },
+            };
+            output + &HtmlElement::from_element(element, tag).write_html()
         })
     }
 
@@ -219,7 +240,7 @@ impl Stylesheet {
                 stylesheet
             })
     }
-    // you are working through this now, get rid of the comment when you are done
+
     fn from_element(element: &Element, mut reducer: Self) -> Self {
         reducer.0.extend(
             element
