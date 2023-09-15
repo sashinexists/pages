@@ -12,6 +12,7 @@ pub struct HtmlElement {
     is_self_closing: bool,
     inner: HtmlInner,
     styles: Vec<Style>,
+    hover_styles: Vec<Style>,
 }
 
 impl HtmlElement {
@@ -21,6 +22,7 @@ impl HtmlElement {
         let classes = element.meta.classes.clone();
         let styles = element.meta.styles.clone();
         let attributes = element.meta.attributes.clone();
+        let hover_styles = element.meta.hover_styles.clone();
         let is_self_closing = match tag {
             Tag::IMG => true,
             _ => false,
@@ -57,6 +59,7 @@ impl HtmlElement {
             classes,
             styles,
             inner,
+            hover_styles,
         }
     }
 
@@ -268,7 +271,6 @@ impl Document {
                     HeadingLevel::H6 => Tag::H6,
                 },
             };
-            dbg!(&HtmlElement::from_element(element, tag.clone()));
             output + &HtmlElement::from_element(element, tag).write_html()
         });
         html
@@ -402,6 +404,26 @@ impl Stylesheet {
         let entry = sheet.0.entry(selector).or_insert_with(Vec::new);
 
         for new_style in &element.styles {
+            let is_present = entry
+                .iter()
+                .any(|existing_style| existing_style.variant_eq(new_style));
+            if !is_present {
+                entry.push(new_style.clone());
+            }
+        }
+
+        // Recurse into children if any
+        if let HtmlInner::Children(children) = &element.inner {
+            for child in children {
+                Stylesheet::populate_from_element(sheet, child);
+            }
+        }
+        let selector = format!("#{}:hover", element.id);
+
+        // Add or merge styles
+        let entry = sheet.0.entry(selector).or_insert_with(Vec::new);
+
+        for new_style in &element.hover_styles {
             let is_present = entry
                 .iter()
                 .any(|existing_style| existing_style.variant_eq(new_style));

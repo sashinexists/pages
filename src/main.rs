@@ -11,12 +11,6 @@ fn main() {
     let home = (Document::new("Sashin Dev", "index.html"))
         .add_style(Style::BackgroundColor(colors::RICH_BLACK))
         .add_style(Style::Margin(Unit::Px(0)))
-        .add_style(Style::PaddingEach(Sides::new(
-            Unit::Px(10),
-            Unit::Px(20),
-            Unit::Px(20),
-            Unit::Px(20),
-        )))
         .add_style(Style::Width(Unit::Percent(100.0)))
         .add_style(Style::Font("Ubuntu".to_string()))
         .add_style(Style::TextColor(colors::DARK_MEDIUM_GRAY));
@@ -24,14 +18,20 @@ fn main() {
     let page_title: Element = heading(HeadingLevel::H1, "Sashin Dev")
         .add_style(Style::FontWeight(FontWeight::Light))
         .add_style(Style::TextColor(colors::MIDDLE_GREEN))
-        .add_style(Style::FontSize(Unit::Px(36)));
+        .add_style(Style::FontSize(Unit::Px(36)))
+        .add_hover_style(Style::TextColor(colors::TURQUOISE_GREEN));
     let mut main = column().add_style(Style::Center);
     let page_header: Element = row()
         .add_style(Style::SpaceBetween)
         .add_style(Style::Height(Unit::Px(50)))
-        .add_style(Style::Width(Unit::Percent(100.0)))
-        .add_style(Style::Padding(Unit::Px(20)))
-        .push(page_title)
+        .add_style(Style::Width(Unit::Percent(95.0)))
+        .add_style(Style::PaddingEach(Sides::new(
+            Unit::Px(30),
+            Unit::Px(20),
+            Unit::Px(40),
+            Unit::Px(40),
+        )))
+        .push(link(page_title, "https://sashin.dev").add_style(Style::NoUnderline))
         .push(
             row()
                 .push(header_link("Past Work", "/past-work"))
@@ -43,7 +43,8 @@ fn main() {
         .add_style(Style::Height(Unit::Percent(100.0)))
         .add_style(Style::FontSize(Unit::Px(13)));
 
-    let banner = image("assets/banner.jpg", "Sashin Dev");
+    let banner =
+        image("assets/banner.jpg", "Sashin Dev").add_style(Style::Width(Unit::Percent(100.0)));
 
     let content = column()
         .add_style(Style::Width(Unit::Px(900)))
@@ -65,6 +66,7 @@ fn main() {
         .push(column());
 
     let home = home.push(main);
+    dbg!(&home);
     pages.add(home);
     pages.write_html();
     pages.write_css();

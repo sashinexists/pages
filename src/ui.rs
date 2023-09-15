@@ -34,6 +34,16 @@ impl Element {
         self
     }
 
+    pub fn add_hover_style(mut self, style: Style) -> Self {
+        self.meta.add_hover_style(style);
+        self
+    }
+
+    pub fn add_hover_styles(mut self, styles: Vec<Style>) -> Self {
+        self.meta.add_hover_styles(styles);
+        self
+    }
+
     pub fn get_tag(&self)-> Tag{
         match &self.content{
             ElementContent::Column(_) => Tag::Div,
@@ -69,6 +79,7 @@ pub enum ElementContent {
 pub struct ElementMetaData {
     pub classes: Vec<String>,
     pub styles: Vec<Style>,
+    pub hover_styles: Vec<Style>,
     pub attributes: HashMap<String, String>,
 }
 
@@ -77,6 +88,7 @@ impl ElementMetaData {
         Self {
             classes: Vec::new(),
             styles: Vec::new(),
+            hover_styles:Vec::new(),
             attributes: HashMap::<String, String>::new(),
         }
     }
@@ -90,6 +102,16 @@ impl ElementMetaData {
     // Add multiple styles at once
     pub fn add_styles(&mut self, styles: Vec<Style>) -> &mut Self {
         self.styles.extend(styles);
+        self
+    }
+    pub fn add_hover_style(&mut self, style: Style) -> &mut Self {
+        self.hover_styles.push(style);
+        self
+    }
+
+    // Add multiple styles at once
+    pub fn add_hover_styles(&mut self, styles: Vec<Style>) -> &mut Self {
+        self.hover_styles.extend(styles);
         self
     }
 }
@@ -134,7 +156,7 @@ pub enum Style {
     SpaceBetween,
     Column,
     Row,
-
+    NoUnderline
 }
 
 impl Style {
@@ -159,7 +181,8 @@ impl Style {
             Self::FontSize(size) => format!("font-size:{size};"),
             Self::SpaceBetween => format!("justify-content:space-between;"),
             Self::Column => format!("display:flex;flex-flow:column nowrap;align-items:center;"),
-            Self::Row=> format!("display:flex;flex-flow:row nowrap;align-items:center;")
+            Self::Row=> format!("display:flex;flex-flow:row nowrap;align-items:center;"),
+            Self::NoUnderline => format!("text-decoration:none;")
             
         }
     }
@@ -348,13 +371,15 @@ pub struct Link {
 
 impl Link {
     pub fn new(label: Element, target: &str) -> Element {
+        let mut meta = ElementMetaData::new();
+        meta.attributes.insert("href".to_string(), target.to_string());
         Element {
             id: format!("link-{}", id::generate()),
             content: ElementContent::Link(Self {
                 label: Box::new(label),
                 target: target.to_string(),
             }),
-            meta: ElementMetaData::new(),
+            meta,
         }
     }
 }

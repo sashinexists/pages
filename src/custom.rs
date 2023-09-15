@@ -6,6 +6,8 @@ pub fn header_link(label: &str, target: &str) -> Element {
         .add_style(Style::Padding(Unit::Px(15)))
         .add_style(Style::Height(Unit::Percent(100.0)))
         .add_style(Style::TextColor(colors::DARK_MEDIUM_GRAY))
+        .add_style(Style::NoUnderline)
+        .add_hover_style(Style::TextColor(colors::PLATINUM))
 }
 
 pub mod colors {
