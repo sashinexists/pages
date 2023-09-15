@@ -10,6 +10,20 @@ pub fn header_link(label: &str, target: &str) -> Element {
         .add_hover_style(Style::TextColor(colors::PLATINUM))
 }
 
+pub fn introduction(title: &str, content: &str, src: &str, alt: &str) -> Element {
+    row()
+        .push(
+            column()
+                .push(heading(HeadingLevel::H2, title))
+                .push(image(src, alt).add_style(Style::Width(Unit::Px(100))))
+                .push(text(content)),
+        )
+        .add_style(Style::Width(Unit::Percent(100.0)))
+        .add_style(Style::Padding(Unit::Px(30)))
+        .add_style(Style::Rounded(Unit::Px(15)))
+        .add_style(Style::FontWeight(FontWeight::Light))
+}
+
 pub mod colors {
 
     use crate::Color; // if Color is defined in another module but in the same crate

@@ -212,7 +212,7 @@ impl Document {
 
     fn write_css(&self) {
         let css = self.get_css();
-        fs::write("style.css", css).expect(&format!("Failed to write stylesheet"));
+        fs::write("public/style.css", css).expect(&format!("Failed to write stylesheet"));
     }
 
     pub fn push(mut self, element: Element) -> Self {

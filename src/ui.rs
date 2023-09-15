@@ -251,6 +251,18 @@ pub struct Corners {
     bottom_right: Unit,
 }
 
+
+impl Corners{
+    pub fn new(top_left: Unit, top_right: Unit, bottom_left: Unit, bottom_right: Unit) -> Self {
+        Self {
+            top_left,
+            top_right,
+            bottom_left,
+            bottom_right,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum FontWeight {
     Thin,

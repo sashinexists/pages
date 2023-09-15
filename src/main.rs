@@ -8,7 +8,7 @@ mod id;
 fn main() {
     let mut pages = Pages::new();
 
-    let home = (Document::new("Sashin Dev", "index.html"))
+    let home = (Document::new("Sashin Dev", "public/index.html"))
         .add_style(Style::BackgroundColor(colors::RICH_BLACK))
         .add_style(Style::Margin(Unit::Px(0)))
         .add_style(Style::Width(Unit::Percent(100.0)))
@@ -43,21 +43,29 @@ fn main() {
         .add_style(Style::Height(Unit::Percent(100.0)))
         .add_style(Style::FontSize(Unit::Px(13)));
 
-    let banner =
-        image("assets/banner.jpg", "Sashin Dev").add_style(Style::Width(Unit::Percent(100.0)));
+    let banner = image("assets/images/banner.jpg", "Sashin Dev")
+        .add_style(Style::Width(Unit::Percent(100.0)));
+
+    const INTRO_TEXT:&'static str = "My name is Sashin, and I help ambitious and creative individuals and organisations design and build their dream websites.
+I work directly with clients to bring their vision to life, getting to know them, their mission and brand, and create websites that reflect them.";
 
     let content = column()
         .add_style(Style::Width(Unit::Px(900)))
         .add_style(Style::Center)
         .add_style(Style::BackgroundColor(colors::EERIE_BLACK))
-        .add_style(Style::TextColor(colors::DARK_MEDIUM_GRAY))
-        .add_style(Style::Rounded(Unit::Px(10)))
+        .add_style(Style::RoundedEach(Corners::new(
+            Unit::Px(0),
+            Unit::Px(0),
+            Unit::Px(15),
+            Unit::Px(15),
+        )))
         .add_style(Style::Padding(Unit::Px(30)))
-        .push(row().push(text("hello").add_style(Style::TextColor(Color::new(255, 255, 0, 1.0)))))
-        .push(row().push(text("my").add_style(Style::BackgroundColor(Color::new(200, 0, 0, 1.0)))))
-        .push(row().push(text("name")))
-        .push(row().push(text("is").add_style(Style::BackgroundColor(Color::new(0, 0, 200, 1.0)))))
-        .push(row().push(text("chara").add_style(Style::TextColor(Color::new(250, 0, 0, 1.0)))));
+        .push(introduction(
+            "Rust Developer at your service",
+            INTRO_TEXT,
+            "assets/images/now-banner.jpg",
+            "Example Banner",
+        ));
 
     let main = main
         .push(page_header)
