@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-uuid = { version = "1.4.1", features = ["v4", "fast-rng", "macro-diagnostics"] }
+dotenv = "0.15.0"

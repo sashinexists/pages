@@ -146,6 +146,7 @@ pub enum Style {
     Padding(Unit),
     PaddingEach(Sides),
     BackgroundColor(Color),
+    BackgroundImage(Image),
     TextColor(Color),
     Center,
     Width(Unit),
@@ -153,10 +154,13 @@ pub enum Style {
     Font(String),
     FontWeight(FontWeight),
     FontSize(Unit),
-    SpaceBetween,
+    AlignItems(AlignItems),
+    JustifyContent(JustifyContent),
     Column,
     Row,
-    NoUnderline
+    NoUnderline,
+    TextAlign(TextAlign)
+    
 }
 
 impl Style {
@@ -172,6 +176,7 @@ impl Style {
             Self::Padding(unit) => format!("padding:{unit};"),
             Self::PaddingEach(sides) => format!("padding-top:{};padding-bottom:{};padding-right:{};padding-left:{};", sides.top, sides.bottom, sides.right, sides.left),
             Self::BackgroundColor(color) => format!("background-color:{};", color),
+            Self::BackgroundImage(image) => format!("background-image:url({});", image.src),
             Self::TextColor(color) => format!("color:{};", color),
             Self::Center => format!("margin:auto;"),
             Self::Height(unit) => format!("height:{unit};" ),
@@ -179,16 +184,96 @@ impl Style {
             Self::Font(font) => format!("font-family:{font};"),
             Self::FontWeight(weight)=> format!("font-weight:{weight};"),
             Self::FontSize(size) => format!("font-size:{size};"),
-            Self::SpaceBetween => format!("justify-content:space-between;"),
+            Self::JustifyContent(value)=> format!("justify-content:{value};"),
+            Self::AlignItems(value)=> format!("align-items:{value};"),
             Self::Column => format!("display:flex;flex-flow:column nowrap;align-items:center;"),
             Self::Row=> format!("display:flex;flex-flow:row nowrap;align-items:center;"),
-            Self::NoUnderline => format!("text-decoration:none;")
+            Self::NoUnderline => format!("text-decoration:none;"),
+            Self::TextAlign(alignment)=> format!("text-align:{alignment};")
+
             
         }
     }
 }
 
-//Obviously make this better, make it rgba if possible
+#[derive(Debug, Clone)]
+pub enum AlignItems {
+    Stretch,
+    Start,
+    End,
+    Center, 
+    Baseline
+}
+impl std::fmt::Display for AlignItems {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let variant = match self {
+            AlignItems::Stretch => "stretch",
+            AlignItems::Start => "start",
+            AlignItems::End => "end",
+            AlignItems::Center => "center",
+            AlignItems::Baseline => "baseline",
+        };
+        write!(f, "{}", variant)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum JustifyContent {
+    Start,
+    End,
+    Center,
+    SpaceBetween,
+    SpaceAround,
+    SpaceEvenly
+}
+
+
+
+impl std::fmt::Display for JustifyContent {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let variant = match self {
+            JustifyContent::Start => "start",
+            JustifyContent::End => "end",
+            JustifyContent::Center => "center",
+            JustifyContent::SpaceBetween => "space-between",
+            JustifyContent::SpaceAround => "space-around",
+            JustifyContent::SpaceEvenly => "space-evenly",
+        };
+        write!(f, "{}", variant)
+    }
+}
+
+
+
+#[derive(Debug, Clone)]
+pub enum TextAlign {
+    Left,
+    Right,
+    Center,
+    Justify,
+    Start,
+    End,
+    Inherit,
+    Initial,
+    Unset,
+}
+
+impl std::fmt::Display for TextAlign {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            TextAlign::Left => write!(f, "left"),
+            TextAlign::Right => write!(f, "right"),
+            TextAlign::Center => write!(f, "center"),
+            TextAlign::Justify => write!(f, "justify"),
+            TextAlign::Start => write!(f, "start"),
+            TextAlign::End => write!(f, "end"),
+            TextAlign::Inherit => write!(f, "inherit"),
+            TextAlign::Initial => write!(f, "initial"),
+            TextAlign::Unset => write!(f, "unset"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
     red: u8,
@@ -343,15 +428,15 @@ impl Column {
 
 #[derive(Debug, Clone)]
 pub struct Text {
-    pub content: String,
+    pub content: Vec<String>,
 }
 
 impl Text {
-    pub fn new(content: &str) -> Element {
+    pub fn new(content: Vec<String>) -> Element {
         Element {
             id: format!("text-{}", id::generate()),
             content: ElementContent::Text(Self {
-                content: content.to_string(),
+                content,
             }),
             meta: ElementMetaData::new(),
         }
@@ -360,11 +445,19 @@ impl Text {
 
 impl El for Text {
     fn to_html(&self) -> String {
+        // inserts the text content into a span if there is only one item, or into paragraphs if there are multiple
+        if self.content.len() == 1 {
         format!(
             "<span {{attributes}} class=~~classes~~ style=~~styles~~>{}</span>",
-            self.content
+            self.content[0]
         )
-        .to_string()
+        .to_string()} else {
+            self.content.iter().map(|paragraph|{
+                format!("<p {{attributes}} class=~~classes~~ style=~~styles~~>{paragraph}</p>")
+            })
+            .collect::<Vec<String>>()
+            .join("\n")
+        }
     }
 }
 
@@ -480,7 +573,10 @@ impl Heading {
 
 
 #[derive(Debug, Clone)]
-pub struct Image;
+pub struct Image {
+    pub src: String,
+    pub alt: String
+}
 
 impl Image {
     
@@ -490,7 +586,10 @@ impl Image {
         meta.attributes.insert("alt".to_string(), alt.to_string());
         Element {
             id: format!("image-{}", id::generate()),
-            content: ElementContent::Image(Self),
+            content: ElementContent::Image(Self{
+                src:src.to_string(),
+                alt:alt.to_string()
+            }),
             meta,
         }
     }
@@ -526,6 +625,8 @@ pub fn row() -> Element {
 }
 
 pub fn text(text: &str) -> Element {
+    let text:Vec<String> =
+        text.split("\n\n").into_iter().map(|paragraph|paragraph.to_string()).collect();
     Text::new(text)
 }
 

@@ -47,7 +47,7 @@ impl HtmlElement {
             ElementContent::Link(link) => {
                 HtmlInner::Children(vec![Self::from_element(&link.label, link.label.get_tag())])
             }
-            ElementContent::Heading(heading) => HtmlInner::Content(heading.content.clone()),
+            ElementContent::Heading(heading) => HtmlInner::Content(vec![heading.content.clone()]),
             ElementContent::Image(_) => HtmlInner::None,
         };
 
@@ -113,7 +113,7 @@ impl HtmlElement {
 #[derive(Debug, Clone)]
 enum HtmlInner {
     Children(Vec<HtmlElement>),
-    Content(String),
+    Content(Vec<String>),
     None,
 }
 
@@ -125,9 +125,28 @@ impl HtmlInner {
                 .map(|child| child.write_html())
                 .collect::<Vec<String>>()
                 .join("\n"),
-            Self::Content(content) => content.clone(),
+            Self::Content(content) => paragraphs_to_html(content.clone()),
             Self::None => "".to_string(),
         }
+    }
+}
+
+fn paragraphs_to_html(paragraphs: Vec<String>) -> String {
+    // inserts the text content into a span if there is only one item, or into paragraphs if there are multiple
+    if paragraphs.len() == 1 {
+        format!(
+            "<span {{attributes}} class=~~classes~~ style=~~styles~~>{}</span>",
+            paragraphs[0]
+        )
+        .to_string()
+    } else {
+        paragraphs
+            .iter()
+            .map(|paragraph| {
+                format!("<p {{attributes}} class=~~classes~~ style=~~styles~~>{paragraph}</p>")
+            })
+            .collect::<Vec<String>>()
+            .join("\n")
     }
 }
 
@@ -212,7 +231,7 @@ impl Document {
 
     fn write_css(&self) {
         let css = self.get_css();
-        fs::write("public/style.css", css).expect(&format!("Failed to write stylesheet"));
+        fs::write(".public/style.css", css).expect(&format!("Failed to write stylesheet"));
     }
 
     pub fn push(mut self, element: Element) -> Self {
