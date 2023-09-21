@@ -90,8 +90,8 @@ fn main() {
     let space_id = env::var("CONTENTFUL_SPACE_ID").expect("CONTENTFUL_SPACE_ID not found");
     let json_string = format!(
         "{:#?}",
-        get_asset_by_id(&access_token, &space_id, "iwOZi8IQNEx5Sew5G7mz5")
-            .expect("Failed to get testimonial data")
+        get_asset_by_id(&access_token, &space_id, "7jGqWQO23G3qfnJScOUNzo")
+            .expect("Failed to get projects data")
     );
 
     let content = column()
