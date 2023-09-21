@@ -1,6 +1,36 @@
-// This is not a part of the actual framework, it's an example of the framework being used
+use super::theme::*;
+use super::utility::*;
 use crate::ui::*;
+use chrono::prelude::*;
+use chrono::{Datelike, Timelike};
+use chrono_tz::Australia::Sydney;
+pub fn footer() -> Element {
+    let utc_now = chrono::Utc::now().naive_utc();
+    let sydney_now = Sydney.from_utc_datetime(&utc_now);
 
+    let (is_pm, hour_12) = sydney_now.hour12();
+    let am_pm = if is_pm { "PM" } else { "AM" };
+
+    let day_name = sydney_now.format("%A").to_string();
+    let day = sydney_now.day();
+    let month = sydney_now.format("%B").to_string();
+    let year = sydney_now.year();
+
+    row()
+        .push(text(&format!(
+            "Last Updated on {}, {} of {}, {} at {}:{}:{}{}",
+            day_name,
+            ordinal(day),
+            month,
+            year,
+            hour_12,
+            sydney_now.minute(),
+            sydney_now.second(),
+            am_pm,
+        )))
+        .add_style(Style::FontSize(Unit::Px(14)))
+        .add_style(Style::Padding(Unit::Px(5)))
+}
 pub fn header_link(label: &str, target: &str) -> Element {
     link(text(label), target)
         .add_style(Style::Padding(Unit::Px(15)))
@@ -38,22 +68,4 @@ pub fn card(title: &str, content: &str, src: &str, alt: &str) -> Element {
         .add_style(Style::FontWeight(FontWeight::Light))
         .add_style(Style::FontSize(Unit::Px(24)))
         .add_style(Style::TextAlign(TextAlign::Justify))
-}
-pub mod colors {
-
-    use crate::Color; // if Color is defined in another module but in the same crate
-    pub const RICH_BLACK: Color = Color::new(3, 3, 3, 1.0);
-    pub const EERIE_BLACK: Color = Color::new(23, 23, 23, 1.0);
-    pub const EERIE_BLACK_LIGHTEST: Color = Color::new(45, 45, 45, 1.0);
-    pub const EERIE_BLACK_LIGHTEST_TRANSPARENT: Color = Color::new(45, 45, 45, 0.9);
-    pub const EERIE_BLACK_LIGHTER: Color = Color::new(36, 36, 36, 1.0);
-    pub const EERIE_BLACK_LIGHTER_TRANSPARENT: Color = Color::new(36, 36, 36, 0.9);
-    pub const EERIE_BLACK_DARKER: Color = Color::new(18, 18, 18, 1.0);
-    pub const EERIE_BLACK_DARKER_TRANSPARENT: Color = Color::new(18, 18, 18, 0.9);
-    pub const CHARLESTON_GREEN: Color = Color::new(44, 44, 44, 1.0);
-    pub const DARK_MEDIUM_GRAY: Color = Color::new(170, 170, 170, 1.0);
-    pub const PLATINUM: Color = Color::new(233, 233, 233, 1.0);
-    pub const MIDDLE_GREEN: Color = Color::new(82, 170, 94, 1.0);
-    pub const TURQUOISE_GREEN: Color = Color::new(160, 208, 167, 1.0);
-    pub const AMARANTH: Color = Color::new(239, 45, 86, 1.0);
 }

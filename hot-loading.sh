@@ -9,4 +9,5 @@ COMMAND="cargo run"
 while inotifywait -r -e modify,create,delete,move "$WATCH_FOLDER"; do
     echo "Folder changes detected, running command..."
     $COMMAND
+    echo "Last update: $(date)"
 done
