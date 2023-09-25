@@ -80,50 +80,55 @@ pub fn get_asset_by_id(
     );
     fetch_and_parse_data(&url)
 }
-mod contentful {
+pub mod contentful {
     use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Clone, Deserialize)]
     pub struct AssetData {
-        fields: Fields,
+        pub fields: Fields,
     }
 
     #[derive(Debug, Clone, Deserialize)]
     pub struct Items {
-        items: Vec<Item>,
+        pub items: Vec<Item>,
     }
 
     #[derive(Debug, Clone, Deserialize)]
-    struct Item {
-        fields: Fields,
+    pub struct Item {
+        pub fields: Fields,
     }
 
     #[derive(Debug, Clone, Deserialize)]
-    struct Fields {
-        author: Option<NestedSys>,
-        text: Option<String>,
-        name: Option<String>,
-        slug: Option<String>,
-        photo: Option<NestedSys>,
-        website: Option<String>,
-        title: Option<String>,
-        organisation: Option<String>,
-        description: Option<String>,
-        file: Option<File>,
+    pub struct Fields {
+        pub author: Option<NestedSys>,
+        pub text: Option<String>,
+        pub name: Option<String>,
+        pub slug: Option<String>,
+        pub photo: Option<NestedSys>,
+        pub website: Option<String>,
+        pub title: Option<String>,
+        pub organisation: Option<String>,
+        pub description: Option<String>,
+        pub file: Option<File>,
+        pub about: Option<String>,
+        pub screenshot: Option<NestedSys>,
+        pub github_url: Option<String>,
+        pub testimonial: Option<NestedSys>,
+        pub skills: Vec<NestedSys>,
     }
 
     #[derive(Debug, Clone, Deserialize)]
-    struct NestedSys {
-        sys: Sys,
+    pub struct NestedSys {
+        pub sys: Sys,
     }
 
     #[derive(Debug, Clone, Deserialize)]
-    struct Sys {
-        id: String,
+    pub struct Sys {
+        pub id: String,
     }
 
     #[derive(Debug, Clone, Deserialize)]
-    struct File {
-        url: String,
+    pub struct File {
+        pub url: String,
     }
 }

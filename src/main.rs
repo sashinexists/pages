@@ -1,9 +1,8 @@
 mod custom;
-use std::fs;
-use std::path::PathBuf;
-
 use dotenv::dotenv;
 use std::env;
+use std::fs;
+use std::path::PathBuf;
 mod html;
 use custom::api::*;
 use custom::components::*;
@@ -17,7 +16,6 @@ mod id;
 fn main() {
     dotenv().expect("Failed to read .env file"); // This line loads the .env file into environment variables
     let mut pages = Pages::new();
-
     let home = (Page::new("Sashin Dev", ".public/index.html", PageData::None))
         .add_style(Style::BackgroundColor(colors::RICH_BLACK))
         .add_style(Style::Margin(Unit::Px(0)))
@@ -90,8 +88,7 @@ fn main() {
     let space_id = env::var("CONTENTFUL_SPACE_ID").expect("CONTENTFUL_SPACE_ID not found");
     let json_string = format!(
         "{:#?}",
-        get_asset_by_id(&access_token, &space_id, "7jGqWQO23G3qfnJScOUNzo")
-            .expect("Failed to get projects data")
+        get_past_projects_data(&access_token, &space_id).expect("Failed to get projects data")
     );
 
     let content = column()
