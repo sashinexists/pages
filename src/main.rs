@@ -11,6 +11,9 @@ use custom::theme::*;
 use html::*;
 mod ui;
 use ui::*;
+
+use crate::custom::datatypes::Projects;
+use crate::custom::datatypes::View;
 mod id;
 
 fn main() {
@@ -86,10 +89,10 @@ fn main() {
     let access_token = env::var("CONTENTFUL_CONTENT_DELIVERY_API_ACCESS_TOKEN")
         .expect("CONTENTFUL_ACCESS_TOKEN not found");
     let space_id = env::var("CONTENTFUL_SPACE_ID").expect("CONTENTFUL_SPACE_ID not found");
-    let json_string = format!(
-        "{:#?}",
-        get_past_projects_data(&access_token, &space_id).expect("Failed to get projects data")
-    );
+    let past_projects_data =
+        get_past_projects_data(&access_token, &space_id).expect("Failed to get projects data");
+    let projects: Projects = Projects::from_items(&access_token, &space_id, past_projects_data);
+    let projects_view = projects.view();
 
     let content = column()
         .add_style(Style::Width(Unit::Px(700)))
@@ -105,10 +108,11 @@ fn main() {
         .add_style(Style::JustifyContent(JustifyContent::Start))
         .push(introduction(
             "Rust Developer at your service",
-            &json_string,
+            &INTRO_TEXT,
             "assets/images/now-banner.jpg",
             "Example Banner",
-        ));
+        ))
+        .push(projects_view);
 
     let main = main
         .push(page_header)

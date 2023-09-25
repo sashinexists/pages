@@ -1,8 +1,12 @@
-use super::api::{
-    contentful::{AssetData, Item, Items},
-    get_asset_by_id,
+use crate::ui::*;
+
+use super::{
+    api::{
+        contentful::{AssetData, Item, Items},
+        get_asset_by_id, get_person_data_by_id, get_skill_by_id, get_testimonial_by_id,
+    },
+    theme::*,
 };
-use std::path::PathBuf;
 use url::Url;
 #[derive(Debug, Clone)]
 pub enum PageData {
@@ -12,7 +16,11 @@ pub enum PageData {
     Testimonials(Testimonials),
 }
 
-// there is an empty PageData enum (with only None as an option) here by default, everything else is custome
+pub trait View {
+    fn view(&self) -> Element;
+}
+
+// there is an empty PageData enum (with only None as an option) and the View trait here by default, everything else is custome
 
 #[derive(Debug, Clone)]
 pub struct Home {
@@ -24,11 +32,54 @@ pub struct Home {
 #[derive(Debug, Clone)]
 pub struct Testimonials(Vec<Testimonial>);
 
+impl Testimonials {
+    pub fn from_items(access_token: &str, space_id: &str, items: Items) -> Self {
+        let testimonials: Vec<Testimonial> = items
+            .items
+            .into_iter()
+            .map(|item| {
+                Testimonial::from_item(access_token, space_id, item)
+                    .expect("Failed to parse Testimonial from item")
+            })
+            .collect::<Vec<Testimonial>>();
+        Self(testimonials)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Testimonial {
     author: Person,
     text: String,
     slug: String,
+}
+
+impl Testimonial {
+    pub fn from_item(access_token: &str, space_id: &str, item: Item) -> Result<Self, ParseError> {
+        Ok(Self {
+            text: item.fields.text.expect("Failed to get testimonial's text"),
+            slug: item.fields.slug.expect("Failed to get testimonial's slug"),
+            author: Person::from_item(
+                access_token,
+                space_id,
+                get_person_data_by_id(
+                    access_token,
+                    space_id,
+                    &item
+                        .fields
+                        .author
+                        .expect("Failed to get testimonial's author")
+                        .sys
+                        .id,
+                )
+                .expect("Failed to get Testimonial's author")
+                .items
+                .first()
+                .expect("No author with that id")
+                .clone(),
+            )
+            .expect("failed to parse testimonial's author"),
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -47,11 +98,12 @@ impl Image {
                 .description
                 .expect("Failed to parse image descrpition"),
             src: Url::parse(
-                &asset
-                    .fields
-                    .file
-                    .expect("Failed to parse image file path")
-                    .url,
+                &("https://".to_string()
+                    + &asset
+                        .fields
+                        .file
+                        .expect("Failed to parse image file path")
+                        .url),
             )
             .expect("Failed to parse asset url as valid url"),
         })
@@ -104,7 +156,30 @@ impl Person {
 }
 
 #[derive(Debug, Clone)]
-pub struct Projects(Vec<Projects>);
+pub struct Projects(Vec<Project>);
+
+impl Projects {
+    pub fn from_items(access_token: &str, space_id: &str, items: Items) -> Self {
+        let items = items
+            .items
+            .into_iter()
+            .map(|item| {
+                Project::from_item(access_token, space_id, item)
+                    .expect("Invalid project in projects")
+            })
+            .collect::<Vec<Project>>();
+        Self(items)
+    }
+}
+
+impl View for Projects {
+    fn view(&self) -> Element {
+        self.0
+            .iter()
+            .fold(column(), |mut output, project| output.push(project.view()))
+            .add_style(Style::Width(Unit::Percent(100.0)))
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Project {
@@ -146,23 +221,66 @@ impl Project {
                 .about
                 .expect("Failed to get projects about text"),
             slug: item.fields.slug.expect("Failed to get project's slug"),
-            website_url: Url::parse(
-                &item
-                    .fields
-                    .website
-                    .expect("Failed to get project's website"),
-            )
-            .ok(),
-            github_url: Url::parse(
-                &item
-                    .fields
-                    .github_url
-                    .expect("Failed to get project's website"),
-            )
-            .ok(),
-            testimonial: todo!(),
-            skills: todo!(),
+            website_url: match &item.fields.website {
+                Some(url) => Some(Url::parse(url).expect("failed to parse website url")),
+                None => None,
+            },
+            github_url: match &item.fields.github_url {
+                Some(url) => Some(Url::parse(url).expect("failed to parse github url")),
+                None => None,
+            },
+            testimonial: match &item.fields.testimonial {
+                Some(testimonial_nested_sys) => Testimonial::from_item(
+                    access_token,
+                    space_id,
+                    get_testimonial_by_id(access_token, space_id, &testimonial_nested_sys.sys.id)
+                        .expect(&format!(
+                            "Failed to get testimonial from id {}",
+                            &testimonial_nested_sys.sys.id
+                        )),
+                )
+                .ok(),
+                None => None,
+            },
+            skills: match item.fields.skills {
+                Some(skills) => skills
+                    .iter()
+                    .map(|skill| {
+                        Skill::from_item(
+                            access_token,
+                            space_id,
+                            get_skill_by_id(access_token, space_id, &skill.sys.id)
+                                .expect("Failed to get skill from id"),
+                        )
+                        .expect("Failed to parse project's skill")
+                    })
+                    .collect::<Vec<Skill>>(),
+
+                None => Vec::new(),
+            },
         })
+    }
+}
+
+impl View for Project {
+    fn view(&self) -> Element {
+        column()
+            .add_style(Style::BackgroundColor(colors::EERIE_BLACK_LIGHTER))
+            .add_style(Style::Rounded(Unit::Px(10)))
+            .add_style(Style::MarginEach(Sides::new(
+                Unit::Px(20),
+                Unit::Px(20),
+                Unit::Px(0),
+                Unit::Px(0),
+            )))
+            .push(row().push(heading(HeadingLevel::H3, &self.title)))
+            .push(
+                row().push(
+                    image(&self.screenshot.src.to_string(), &self.screenshot.alt)
+                        .add_style(Style::MaxWidth(Unit::Percent(100.0))),
+                ),
+            )
+            .push(row().push(text(&self.description)))
     }
 }
 
@@ -193,6 +311,7 @@ struct Skill {
 
 impl Skill {
     fn from_item(access_token: &str, space_id: &str, item: Item) -> Result<Self, ParseError> {
+        let temp = &item.fields.photo.clone();
         Ok(Self {
             name: item.fields.name.expect("Failed to parse skill name"),
             description: item
@@ -207,8 +326,11 @@ impl Skill {
                     space_id,
                     &item
                         .fields
-                        .photo
-                        .expect("Failed to get thumbnail photo")
+                        .thumbnail
+                        .expect(&format!(
+                            "Failed to get nested thumbnail from item {:#?}",
+                            temp
+                        ))
                         .sys
                         .id,
                 )

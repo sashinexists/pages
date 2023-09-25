@@ -150,7 +150,9 @@ pub enum Style {
     TextColor(Color),
     Center,
     Width(Unit),
+    MaxWidth(Unit),
     Height(Unit),
+    MaxHeight(Unit),
     Font(String),
     FontWeight(FontWeight),
     FontSize(Unit),
@@ -180,7 +182,9 @@ impl Style {
             Self::TextColor(color) => format!("color:{};", color),
             Self::Center => format!("margin:auto;"),
             Self::Height(unit) => format!("height:{unit};" ),
+            Self::MaxHeight(unit) => format!("max-height:{unit};" ),
             Self::Width(unit) => format!("width:{unit};" ),
+            Self::MaxWidth(unit) => format!("max-width:{unit};" ),
             Self::Font(font) => format!("font-family:{font};"),
             Self::FontWeight(weight)=> format!("font-weight:{weight};"),
             Self::FontSize(size) => format!("font-size:{size};"),
@@ -594,6 +598,12 @@ impl Image {
         }
     }
 }
+
+impl El for Image{
+    fn to_html(&self)->String {
+        format!("<img src='{}' alt='{}'/>", &self.src, &self.alt)
+    }
+}
 #[derive(Debug, Clone)]
 pub enum HeadingLevel {
     H1,
@@ -638,6 +648,6 @@ pub fn link(label: Element, path: &str) -> Element {
     Link::new(label, path)
 }
 
-pub fn image(src:&str, attribute:&str) -> Element {
-    Image::new(src, attribute)
+pub fn image(src:&str, alt:&str) -> Element {
+    Image::new(src, alt)
 }

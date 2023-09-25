@@ -2,7 +2,7 @@ use reqwest;
 use serde::Deserialize;
 use serde_json;
 
-use self::contentful::{AssetData, Items};
+use self::contentful::{AssetData, Item, Items};
 
 #[derive(Debug)]
 pub enum ContentfulFetchError {
@@ -69,6 +69,36 @@ pub fn get_person_data_by_id(
     fetch_and_parse_data(&url)
 }
 
+pub fn get_testimonial_by_id(
+    access_token: &str,
+    space_id: &str,
+    id: &str,
+) -> Result<Item, ContentfulFetchError> {
+    let url = format!(
+        "https://cdn.contentful.com/spaces/{}/environments/master/entries?content_type=testimonial&access_token={}&order=sys.updatedAt&sys.id={}",
+        space_id, access_token, id
+    );
+    let results: Result<Items, ContentfulFetchError> = fetch_and_parse_data(&url);
+    Ok(results
+        .expect("Failed to fetch and parse testimonials")
+        .items[0]
+        .clone())
+    // fetch_and_parse_data(&url)
+}
+
+pub fn get_skill_by_id(
+    access_token: &str,
+    space_id: &str,
+    id: &str,
+) -> Result<Item, ContentfulFetchError> {
+    let url = format!("https://cdn.contentful.com/spaces/{space_id}/environments/master/entries?content_type=skill&access_token={access_token}&order=sys.updatedAt&sys.id={id}");
+    let results: Result<Items, ContentfulFetchError> = fetch_and_parse_data(&url);
+    Ok(results
+        .expect("Failed to fetch and parse testimonials")
+        .items[0]
+        .clone())
+}
+
 pub fn get_asset_by_id(
     access_token: &str,
     space_id: &str,
@@ -105,6 +135,7 @@ pub mod contentful {
         pub name: Option<String>,
         pub slug: Option<String>,
         pub photo: Option<NestedSys>,
+        pub thumbnail: Option<NestedSys>,
         pub website: Option<String>,
         pub title: Option<String>,
         pub organisation: Option<String>,
@@ -114,7 +145,7 @@ pub mod contentful {
         pub screenshot: Option<NestedSys>,
         pub github_url: Option<String>,
         pub testimonial: Option<NestedSys>,
-        pub skills: Vec<NestedSys>,
+        pub skills: Option<Vec<NestedSys>>,
     }
 
     #[derive(Debug, Clone, Deserialize)]
