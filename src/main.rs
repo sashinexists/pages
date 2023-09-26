@@ -18,6 +18,7 @@ mod id;
 
 fn main() {
     dotenv().expect("Failed to read .env file"); // This line loads the .env file into environment variables
+    let something = column!(Style::BackgroundColor(colors::EERIE_BLACK));
     let mut pages = Pages::new();
     let home = (Page::new("Sashin Dev", ".public/index.html", PageData::None))
         .add_style(Style::BackgroundColor(colors::RICH_BLACK))

@@ -1,5 +1,29 @@
 use std::{collections::HashMap, fmt::Debug};
 use crate::{id, html::Tag};
+
+#[macro_export]
+macro_rules! column {
+    ($($x:expr),*)=> {
+        {
+            let mut temp_column = column();
+            $(
+              temp_column = temp_column.add_style($x); 
+            )*
+            temp_column
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! row{
+    ($($x:expr),*)=> {
+        let mut temp_row= row();
+        $(
+          temp_row.add_style($x); 
+        )*
+        temp_row
+    }
+}
 #[derive(Debug)]
 pub struct PushError;
 
