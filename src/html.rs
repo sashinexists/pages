@@ -132,11 +132,7 @@ impl HtmlInner {
 fn paragraphs_to_html(paragraphs: Vec<String>) -> String {
     // inserts the text content into a span if there is only one item, or into paragraphs if there are multiple
     if paragraphs.len() == 1 {
-        format!(
-            "<span {{attributes}} class=~~classes~~ style=~~styles~~>{}</span>",
-            paragraphs[0]
-        )
-        .to_string()
+        paragraphs[0].to_string()
     } else {
         paragraphs
             .iter()

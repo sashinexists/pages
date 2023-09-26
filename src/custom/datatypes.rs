@@ -264,23 +264,70 @@ impl Project {
 
 impl View for Project {
     fn view(&self) -> Element {
+        const TITLE_BAR_HEIGHT: Unit = Unit::Px(60);
         column()
             .add_style(Style::BackgroundColor(colors::EERIE_BLACK_LIGHTER))
             .add_style(Style::Rounded(Unit::Px(10)))
             .add_style(Style::MarginEach(Sides::new(
-                Unit::Px(20),
-                Unit::Px(20),
+                Unit::Px(0),
+                Unit::Px(70),
                 Unit::Px(0),
                 Unit::Px(0),
             )))
-            .push(row().push(heading(HeadingLevel::H3, &self.title)))
+            .add_style(Style::Width(Unit::Percent(100.0)))
             .push(
-                row().push(
-                    image(&self.screenshot.src.to_string(), &self.screenshot.alt)
-                        .add_style(Style::MaxWidth(Unit::Percent(100.0))),
+                row()
+                    .add_style(Style::Height(TITLE_BAR_HEIGHT))
+                    .add_style(Style::Width(Unit::Percent(100.0)))
+                    .add_style(Style::AlignItems(AlignItems::Center))
+                    .add_style(Style::JustifyContent(JustifyContent::Center))
+                    .push(
+                        heading(HeadingLevel::H3, &self.title)
+                            .add_style(Style::FontSize(Unit::Px(25)))
+                            .add_style(Style::FontWeight(FontWeight::Light))
+                            .add_style(Style::Padding(Unit::Px(0)))
+                            .add_style(Style::Width(Unit::Percent(100.0)))
+                            .add_style(Style::Height(Unit::Percent(100.0)))
+                            .add_style(Style::LineHeight(TITLE_BAR_HEIGHT))
+                            .add_style(Style::TextAlign(TextAlign::Center)),
+                    ),
+            )
+            .push(
+                row().add_style(Style::Width(Unit::Percent(100.0))).push(
+                    column()
+                        .add_style(Style::Width(Unit::Percent(100.0)))
+                        .add_style(Style::Height(Unit::Px(500)))
+                        .add_style(Style::BackgroundImage(crate::ui::Image {
+                            src: self.screenshot.src.to_string(),
+                            alt: self.screenshot.alt.clone(),
+                        }))
+                        .add_style(Style::BackgroundSize(BackgroundSize::Cover))
+                        .add_style(Style::AlignItems(AlignItems::Center))
+                        .add_style(Style::JustifyContent(JustifyContent::End))
+                        .add_style(Style::Rounded(Unit::Px(10)))
+                        .push(
+                            row()
+                                .add_style(Style::Width(Unit::Percent(100.0)))
+                                .add_style(Style::TextAlign(TextAlign::Center))
+                                .add_style(Style::BackgroundColor(
+                                    colors::EERIE_BLACK_DARKER_TRANSPARENT,
+                                ))
+                                .add_style(Style::RoundedEach(Corners::new(
+                                    Unit::Px(0),
+                                    Unit::Px(0),
+                                    Unit::Px(10),
+                                    Unit::Px(10),
+                                )))
+                                .add_style(Style::Padding(Unit::Px(10)))
+                                .push(
+                                    text(&self.description)
+                                        .add_style(Style::Width(Unit::Percent(100.0)))
+                                        .add_style(Style::FontSize(Unit::Px(16)))
+                                        .add_style(Style::FontWeight(FontWeight::Light)),
+                                ),
+                        ),
                 ),
             )
-            .push(row().push(text(&self.description)))
     }
 }
 

@@ -92,17 +92,35 @@ fn main() {
     let past_projects_data =
         get_past_projects_data(&access_token, &space_id).expect("Failed to get projects data");
     let projects: Projects = Projects::from_items(&access_token, &space_id, past_projects_data);
-    let projects_view = projects.view();
+    let projects_view = row().add_style(Style::Width(Unit::Percent(100.0))).push(
+        column()
+            .add_style(Style::Width(Unit::Percent(100.0)))
+            .add_style(Style::AlignItems(AlignItems::Center))
+            .add_style(Style::JustifyContent(JustifyContent::Start))
+            .push(
+                row().add_style(Style::Width(Unit::Percent(100.0))).push(
+                    heading(HeadingLevel::H2, "Past Work")
+                        .add_style(Style::FontWeight(FontWeight::ExtraLight))
+                        .add_style(Style::FontSize(Unit::Px(35)))
+                        .add_style(Style::Height(Unit::Px(20))),
+                ),
+            )
+            .push(
+                row()
+                    .add_style(Style::Width(Unit::Percent(100.0)))
+                    .push(projects.view()),
+            ),
+    );
 
     let content = column()
-        .add_style(Style::Width(Unit::Px(700)))
+        .add_style(Style::Width(Unit::Px(768)))
         .add_style(Style::Center)
         .add_style(Style::BackgroundColor(colors::EERIE_BLACK))
         .add_style(Style::RoundedEach(Corners::new(
             Unit::Px(0),
             Unit::Px(0),
-            Unit::Px(15),
-            Unit::Px(15),
+            Unit::Px(10),
+            Unit::Px(10),
         )))
         .add_style(Style::Padding(Unit::Px(15)))
         .add_style(Style::JustifyContent(JustifyContent::Start))

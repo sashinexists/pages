@@ -147,6 +147,7 @@ pub enum Style {
     PaddingEach(Sides),
     BackgroundColor(Color),
     BackgroundImage(Image),
+    BackgroundSize(BackgroundSize),
     TextColor(Color),
     Center,
     Width(Unit),
@@ -161,7 +162,8 @@ pub enum Style {
     Column,
     Row,
     NoUnderline,
-    TextAlign(TextAlign)
+    TextAlign(TextAlign),
+    LineHeight(Unit)
     
 }
 
@@ -179,6 +181,7 @@ impl Style {
             Self::PaddingEach(sides) => format!("padding-top:{};padding-bottom:{};padding-right:{};padding-left:{};", sides.top, sides.bottom, sides.right, sides.left),
             Self::BackgroundColor(color) => format!("background-color:{};", color),
             Self::BackgroundImage(image) => format!("background-image:url({});", image.src),
+            Self::BackgroundSize(background_size)=> format!("background-size:{background_size};"),
             Self::TextColor(color) => format!("color:{};", color),
             Self::Center => format!("margin:auto;"),
             Self::Height(unit) => format!("height:{unit};" ),
@@ -193,7 +196,8 @@ impl Style {
             Self::Column => format!("display:flex;flex-flow:column nowrap;align-items:center;"),
             Self::Row=> format!("display:flex;flex-flow:row nowrap;align-items:center;"),
             Self::NoUnderline => format!("text-decoration:none;"),
-            Self::TextAlign(alignment)=> format!("text-align:{alignment};")
+            Self::TextAlign(alignment)=> format!("text-align:{alignment};"),
+            Self::LineHeight(unit) => format!("line-height:{unit};")
 
             
         }
@@ -381,6 +385,25 @@ impl std::fmt::Display for FontWeight {
         write!(f, "{}", weight_str)
     }
 }
+
+#[derive(Clone, Debug)]
+pub enum BackgroundSize {
+    Length(Unit),
+    Cover,
+    Contain
+}
+
+impl std::fmt::Display for BackgroundSize {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+       let background_size_str = match self {
+            Self::Length(unit)=> format!("{}", unit),
+            Self::Cover => "cover".to_string(),
+            Self::Contain => "contain".to_string(),
+        } ;
+        write!(f, "{}", background_size_str)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Row {
     pub elements: Vec<Element>,
@@ -517,16 +540,6 @@ impl std::fmt::Display for Unit {
         }
     }
 }
-impl Unit {
-    fn to_utility_string(&self) -> String {
-        match self {
-            Unit::Px(px) => format!("{px}-px"),
-            Unit::Em(em) => format!("{em}-em"),
-            Unit::Rem(rem) => format!("{rem}-rem"),
-            Unit::Percent(percent) => format!("{percent}-percent"),
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct Heading {
@@ -545,36 +558,14 @@ impl Heading {
             meta: ElementMetaData::new(),
         }
     }
-    pub fn to_html(&self) -> String {
-        match self.level {
-            HeadingLevel::H1 => format!(
-                "<h1 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h1>",
-                self.content
-            ),
-            HeadingLevel::H2 => format!(
-                "<h2 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h2>",
-                self.content
-            ),
-            HeadingLevel::H3 => format!(
-                "<h3 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h3>",
-                self.content
-            ),
-            HeadingLevel::H4 => format!(
-                "<h4 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h4>",
-                self.content
-            ),
-            HeadingLevel::H5 => format!(
-                "<h5 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h5>",
-                self.content
-            ),
-            HeadingLevel::H6 => format!(
-                "<h6 style=~~styles~~ class=~~classes~~ attributes={{attributes}}>{}</h6>",
-                self.content
-            ),
-        }
-    }
 }
 
+impl El for Heading {
+    
+    fn to_html(&self) -> String {
+        format!("<{}>{}</{}>", self.level, self.content, self.level)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Image {
