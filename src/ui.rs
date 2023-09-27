@@ -9,7 +9,7 @@ macro_rules! column {
             $(
               temp_column = temp_column.add_style($x); 
             )*
-            temp_column
+            temp_column as Element
         }
     }
 }
@@ -17,13 +17,16 @@ macro_rules! column {
 #[macro_export]
 macro_rules! row{
     ($($x:expr),*)=> {
-        let mut temp_row= row();
-        $(
-          temp_row.add_style($x); 
-        )*
-        temp_row
+        {
+            let mut temp_row= row();
+            $(
+              temp_row = temp_row.add_style($x); 
+            )*
+            temp_row as Element
+        }
     }
 }
+
 #[derive(Debug)]
 pub struct PushError;
 

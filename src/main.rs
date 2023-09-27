@@ -9,6 +9,7 @@ use custom::components::*;
 use custom::datatypes::PageData;
 use custom::theme::*;
 use html::*;
+#[macro_use]
 mod ui;
 use ui::*;
 
