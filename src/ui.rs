@@ -56,7 +56,7 @@ impl Element {
         self
     }
 
-    pub fn add_styles(mut self, styles: Vec<Style>) -> Self {
+    pub fn add_styles(mut self, styles: &[Style]) -> Self {
         self.meta.add_styles(styles);
         self
     }
@@ -127,8 +127,8 @@ impl ElementMetaData {
     }
 
     // Add multiple styles at once
-    pub fn add_styles(&mut self, styles: Vec<Style>) -> &mut Self {
-        self.styles.extend(styles);
+    pub fn add_styles(&mut self, styles: &[Style]) -> &mut Self {
+        self.styles.extend(styles.iter().map(|style|style.clone()).collect::<Vec<Style>>());
         self
     }
     pub fn add_hover_style(&mut self, style: Style) -> &mut Self {

@@ -11,40 +11,52 @@ use custom::theme::*;
 use html::*;
 #[macro_use]
 mod ui;
-use ui::*;
-
 use crate::custom::datatypes::Projects;
 use crate::custom::datatypes::View;
+use ui::*;
 mod id;
 
 fn main() {
     dotenv().expect("Failed to read .env file"); // This line loads the .env file into environment variables
-    let something = column!(Style::BackgroundColor(colors::EERIE_BLACK));
+    let something = column!(
+        Style::BackgroundColor(colors::RICH_BLACK),
+        Style::Margin(Unit::Px(0)),
+        Style::Width(Unit::Percent(100.0)),
+        Style::Font("Ubuntu".to_string()),
+        Style::TextColor(colors::DARK_MEDIUM_GRAY)
+    );
     let mut pages = Pages::new();
-    let home = (Page::new("Sashin Dev", ".public/index.html", PageData::None))
-        .add_style(Style::BackgroundColor(colors::RICH_BLACK))
-        .add_style(Style::Margin(Unit::Px(0)))
-        .add_style(Style::Width(Unit::Percent(100.0)))
-        .add_style(Style::Font("Ubuntu".to_string()))
-        .add_style(Style::TextColor(colors::DARK_MEDIUM_GRAY));
+    let home = (Page::new("Sashin Dev", ".public/index.html", PageData::None)).add_styles(&[
+        Style::BackgroundColor(colors::RICH_BLACK),
+        Style::Margin(Unit::Px(0)),
+        Style::Width(Unit::Percent(100.0)),
+        Style::Font("Ubuntu".to_string()),
+        Style::TextColor(colors::DARK_MEDIUM_GRAY),
+    ]);
 
     let page_title: Element = heading(HeadingLevel::H1, "Sashin Dev")
-        .add_style(Style::FontWeight(FontWeight::Light))
-        .add_style(Style::TextColor(colors::MIDDLE_GREEN))
-        .add_style(Style::FontSize(Unit::Px(36)))
+        .add_styles(&[
+            Style::FontWeight(FontWeight::Light),
+            Style::TextColor(colors::MIDDLE_GREEN),
+            Style::FontSize(Unit::Px(36)),
+        ])
         .add_hover_style(Style::TextColor(colors::TURQUOISE_GREEN));
 
     let mut main = column().add_style(Style::Center);
 
     let page_header: Element = row()
-        .add_style(Style::JustifyContent(JustifyContent::SpaceBetween))
-        .add_style(Style::Width(Unit::Percent(100.0)))
-        .add_style(Style::PaddingEach(Sides::new(
-            Unit::Px(5),
-            Unit::Px(5),
-            Unit::Px(20),
-            Unit::Px(20),
-        )))
+        .add_styles(&[
+            Style::JustifyContent(JustifyContent::SpaceBetween),
+            Style::Width(Unit::Percent(100.0)),
+            Style::PaddingEach(Sides::new(
+                Unit::Px(5),
+                Unit::Px(5),
+                Unit::Px(20),
+                Unit::Px(20),
+            )),
+            Style::Height(Unit::Percent(100.0)),
+            Style::FontSize(Unit::Px(13)),
+        ])
         .push(link(page_title, "https://sashin.dev").add_style(Style::NoUnderline))
         .push(
             row()
@@ -53,39 +65,39 @@ fn main() {
                 .push(header_link("Testimonials", "/testimonials"))
                 .push(header_link("Writing", "/writing"))
                 .push(header_link("Now", "/now")),
-        )
-        .add_style(Style::Height(Unit::Percent(100.0)))
-        .add_style(Style::FontSize(Unit::Px(13)));
-
-    let banner = column()
-        .add_style(Style::BackgroundImage(Image {
-            src: "'assets/images/banner.jpg'".to_string(),
-            alt: "banner-image".to_string(),
-        }))
-        .add_style(Style::Width(Unit::Percent(100.0)))
-        .add_style(Style::Height(Unit::Px(300)))
-        .add_style(Style::JustifyContent(JustifyContent::End))
-        .push(
-            row()
-                .add_style(Style::Width(Unit::Percent(100.0)))
-                .add_style(Style::BackgroundColor(
-                    colors::EERIE_BLACK_DARKER_TRANSPARENT,
-                ))
-                .add_style(Style::PaddingEach(Sides::new(
-                    Unit::Px(20),
-                    Unit::Px(20),
-                    Unit::Px(0),
-                    Unit::Px(0),
-                )))
-                .push(
-                    text("Crafting better software for creators and innovators")
-                        .add_style(Style::FontSize(Unit::Px(30)))
-                        .add_style(Style::FontWeight(FontWeight::ExtraLight))
-                        .add_style(Style::TextAlign(TextAlign::Center))
-                        .add_style(Style::Width(Unit::Percent(100.0))),
-                ),
         );
 
+    let banner = column()
+        .add_styles(&[
+            Style::BackgroundImage(Image {
+                src: "'assets/images/banner.jpg'".to_string(),
+                alt: "banner-image".to_string(),
+            }),
+            Style::Width(Unit::Percent(100.0)),
+            Style::Height(Unit::Px(300)),
+            Style::JustifyContent(ui::JustifyContent::End),
+        ])
+        .push(
+            row()
+                .add_styles(&[
+                    Style::Width(Unit::Percent(100.0)),
+                    Style::BackgroundColor(colors::EERIE_BLACK_DARKER_TRANSPARENT),
+                    Style::PaddingEach(Sides::new(
+                        Unit::Px(20),
+                        Unit::Px(20),
+                        Unit::Px(0),
+                        Unit::Px(0),
+                    )),
+                ])
+                .push(
+                    text("Crafting better software for creators and innovators").add_styles(&[
+                        Style::FontSize(Unit::Px(30)),
+                        Style::FontWeight(FontWeight::ExtraLight),
+                        Style::TextAlign(ui::TextAlign::Center),
+                        Style::Width(Unit::Percent(100.0)),
+                    ]),
+                ),
+        );
     const INTRO_TEXT:&'static str = "My name is Sashin, and I help ambitious and creative individuals and organisations design and build their dream websites.\n\nI work directly with clients to bring their vision to life, getting to know them, their mission and brand, and create websites that reflect them.";
     // following three lets are for testing
     let access_token = env::var("CONTENTFUL_CONTENT_DELIVERY_API_ACCESS_TOKEN")
@@ -94,38 +106,46 @@ fn main() {
     let past_projects_data =
         get_past_projects_data(&access_token, &space_id).expect("Failed to get projects data");
     let projects: Projects = Projects::from_items(&access_token, &space_id, past_projects_data);
-    let projects_view = row().add_style(Style::Width(Unit::Percent(100.0))).push(
-        column()
-            .add_style(Style::Width(Unit::Percent(100.0)))
-            .add_style(Style::AlignItems(AlignItems::Center))
-            .add_style(Style::JustifyContent(JustifyContent::Start))
-            .push(
-                row().add_style(Style::Width(Unit::Percent(100.0))).push(
-                    heading(HeadingLevel::H2, "Past Work")
-                        .add_style(Style::FontWeight(FontWeight::ExtraLight))
-                        .add_style(Style::FontSize(Unit::Px(35)))
-                        .add_style(Style::Height(Unit::Px(20))),
+
+    let projects_view = row()
+        .add_styles(&[Style::Width(Unit::Percent(100.0))])
+        .push(
+            column()
+                .add_styles(&[
+                    Style::Width(Unit::Percent(100.0)),
+                    Style::AlignItems(ui::AlignItems::Center),
+                    Style::JustifyContent(ui::JustifyContent::Start),
+                ])
+                .push(
+                    row()
+                        .add_styles(&[Style::Width(Unit::Percent(100.0))])
+                        .push(heading(HeadingLevel::H2, "Past Work").add_styles(&[
+                            Style::FontWeight(FontWeight::ExtraLight),
+                            Style::FontSize(Unit::Px(35)),
+                            Style::Height(Unit::Px(20)),
+                        ])),
+                )
+                .push(
+                    row()
+                        .add_styles(&[Style::Width(Unit::Percent(100.0))])
+                        .push(projects.view()),
                 ),
-            )
-            .push(
-                row()
-                    .add_style(Style::Width(Unit::Percent(100.0)))
-                    .push(projects.view()),
-            ),
-    );
+        );
 
     let content = column()
-        .add_style(Style::Width(Unit::Px(768)))
-        .add_style(Style::Center)
-        .add_style(Style::BackgroundColor(colors::EERIE_BLACK))
-        .add_style(Style::RoundedEach(Corners::new(
-            Unit::Px(0),
-            Unit::Px(0),
-            Unit::Px(10),
-            Unit::Px(10),
-        )))
-        .add_style(Style::Padding(Unit::Px(15)))
-        .add_style(Style::JustifyContent(JustifyContent::Start))
+        .add_styles(&[
+            Style::Width(Unit::Px(768)),
+            Style::Center,
+            Style::BackgroundColor(colors::EERIE_BLACK),
+            Style::RoundedEach(Corners::new(
+                Unit::Px(0),
+                Unit::Px(0),
+                Unit::Px(10),
+                Unit::Px(10),
+            )),
+            Style::Padding(Unit::Px(15)),
+            Style::JustifyContent(ui::JustifyContent::Start),
+        ])
         .push(introduction(
             "Rust Developer at your service",
             &INTRO_TEXT,
@@ -166,13 +186,18 @@ impl Pages {
         self.clone()
     }
 
-    pub fn write_html(&mut self) {
+    pub fn write_html(&self) {
         self.0.iter().for_each(|page| page.write_html());
     }
 
     //this runs for each page, you will need to fix this when you have more pages
-    pub fn write_css(&mut self) {
+    pub fn write_css(&self) {
         self.0.iter().for_each(|page| page.write_css());
+    }
+    pub fn publish(&self) {
+        self.write_html();
+        self.write_css();
+        println!("Successfully published site");
     }
 }
 
@@ -201,11 +226,19 @@ impl Page {
             "Failed to write document to {}",
             &self.path.display()
         ));
+        println!(
+            "Successfully published html for page '{}' to '{:?}'",
+            self.title, self.path
+        );
     }
 
     fn write_css(&self) {
         let css = self.get_css();
         fs::write(".public/style.css", css).expect(&format!("Failed to write stylesheet"));
+        println!(
+            "Successfully published css for page '{}' to '{:?}'",
+            self.title, self.path
+        );
     }
 
     pub fn push(mut self, element: Element) -> Self {
@@ -274,8 +307,13 @@ impl Page {
         self
     }
 
-    pub fn add_styles(mut self, styles: Vec<Style>) -> Self {
-        self.styles.extend(styles);
+    pub fn add_styles(mut self, styles: &[Style]) -> Self {
+        self.styles.extend(
+            styles
+                .iter()
+                .map(|style| style.clone())
+                .collect::<Vec<Style>>(),
+        );
         self
     }
 

@@ -18,7 +18,7 @@ pub fn footer() -> Element {
 
     row()
         .push(text(&format!(
-            "Last Updated on {}, {} of {}, {} at {}:{}:{}{}",
+            "Last Updated on {}, {} of {}, {} at {}:{:02}:{:02}{}",
             day_name,
             ordinal(day),
             month,
@@ -28,15 +28,17 @@ pub fn footer() -> Element {
             sydney_now.second(),
             am_pm,
         )))
-        .add_style(Style::FontSize(Unit::Px(14)))
-        .add_style(Style::Padding(Unit::Px(5)))
+        .add_styles(&[Style::FontSize(Unit::Px(14)), Style::Padding(Unit::Px(5))])
 }
+
 pub fn header_link(label: &str, target: &str) -> Element {
     link(text(label), target)
-        .add_style(Style::Padding(Unit::Px(15)))
-        .add_style(Style::Height(Unit::Percent(100.0)))
-        .add_style(Style::TextColor(colors::DARK_MEDIUM_GRAY))
-        .add_style(Style::NoUnderline)
+        .add_styles(&[
+            Style::Padding(Unit::Px(15)),
+            Style::Height(Unit::Percent(100.0)),
+            Style::TextColor(colors::DARK_MEDIUM_GRAY),
+            Style::NoUnderline,
+        ])
         .add_hover_style(Style::TextColor(colors::PLATINUM))
 }
 
@@ -44,12 +46,14 @@ pub fn introduction(title: &str, content: &str, src: &str, alt: &str) -> Element
     column()
         .push(
             row()
-                .push(text(content).add_style(Style::Width(Unit::Percent(100.0))))
-                .add_style(Style::Width(Unit::Percent(100.0))),
+                .push(text(content).add_styles(&[Style::Width(Unit::Percent(100.0))]))
+                .add_styles(&[Style::Width(Unit::Percent(100.0))]),
         )
-        .add_style(Style::Width(Unit::Percent(100.0)))
-        .add_style(Style::Padding(Unit::Px(20)))
-        .add_style(Style::FontWeight(FontWeight::Light))
-        .add_style(Style::FontSize(Unit::Px(18)))
-        .add_style(Style::TextAlign(TextAlign::Justify))
+        .add_styles(&[
+            Style::Width(Unit::Percent(100.0)),
+            Style::Padding(Unit::Px(20)),
+            Style::FontWeight(FontWeight::Light),
+            Style::FontSize(Unit::Px(18)),
+            Style::TextAlign(TextAlign::Justify),
+        ])
 }

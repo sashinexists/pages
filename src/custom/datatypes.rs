@@ -1,5 +1,5 @@
-use super::super::ui::*;
-
+use super::super::ui;
+use super::super::*;
 use super::{
     api::{
         contentful::{AssetData, Item, Items},
@@ -266,67 +266,75 @@ impl View for Project {
     fn view(&self) -> Element {
         const TITLE_BAR_HEIGHT: Unit = Unit::Px(60);
         column()
-            .add_style(Style::BackgroundColor(colors::EERIE_BLACK_LIGHTER))
-            .add_style(Style::Rounded(Unit::Px(10)))
-            .add_style(Style::MarginEach(Sides::new(
-                Unit::Px(0),
-                Unit::Px(70),
-                Unit::Px(0),
-                Unit::Px(0),
-            )))
-            .add_style(Style::Width(Unit::Percent(100.0)))
+            .add_styles(&[
+                Style::BackgroundColor(colors::EERIE_BLACK_LIGHTER),
+                Style::Rounded(Unit::Px(10)),
+                Style::MarginEach(Sides::new(
+                    Unit::Px(0),
+                    Unit::Px(70),
+                    Unit::Px(0),
+                    Unit::Px(0),
+                )),
+                Style::Width(Unit::Percent(100.0)),
+            ])
             .push(
                 row()
-                    .add_style(Style::Height(TITLE_BAR_HEIGHT))
-                    .add_style(Style::Width(Unit::Percent(100.0)))
-                    .add_style(Style::AlignItems(AlignItems::Center))
-                    .add_style(Style::JustifyContent(JustifyContent::Center))
-                    .push(
-                        heading(HeadingLevel::H3, &self.title)
-                            .add_style(Style::FontSize(Unit::Px(25)))
-                            .add_style(Style::FontWeight(FontWeight::Light))
-                            .add_style(Style::Padding(Unit::Px(0)))
-                            .add_style(Style::Width(Unit::Percent(100.0)))
-                            .add_style(Style::Height(Unit::Percent(100.0)))
-                            .add_style(Style::LineHeight(TITLE_BAR_HEIGHT))
-                            .add_style(Style::TextAlign(TextAlign::Center)),
-                    ),
+                    .add_styles(&[
+                        Style::Height(TITLE_BAR_HEIGHT),
+                        Style::Width(Unit::Percent(100.0)),
+                        Style::AlignItems(ui::AlignItems::Center),
+                        Style::JustifyContent(ui::JustifyContent::Center),
+                    ])
+                    .push(heading(HeadingLevel::H3, &self.title).add_styles(&[
+                        Style::FontSize(Unit::Px(25)),
+                        Style::FontWeight(FontWeight::Light),
+                        Style::Padding(Unit::Px(0)),
+                        Style::Width(Unit::Percent(100.0)),
+                        Style::Height(Unit::Percent(100.0)),
+                        Style::LineHeight(TITLE_BAR_HEIGHT),
+                        Style::TextAlign(ui::TextAlign::Center),
+                    ])),
             )
             .push(
-                row().add_style(Style::Width(Unit::Percent(100.0))).push(
-                    column()
-                        .add_style(Style::Width(Unit::Percent(100.0)))
-                        .add_style(Style::Height(Unit::Px(500)))
-                        .add_style(Style::BackgroundImage(crate::ui::Image {
-                            src: self.screenshot.src.to_string(),
-                            alt: self.screenshot.alt.clone(),
-                        }))
-                        .add_style(Style::BackgroundSize(BackgroundSize::Cover))
-                        .add_style(Style::AlignItems(AlignItems::Center))
-                        .add_style(Style::JustifyContent(JustifyContent::End))
-                        .add_style(Style::Rounded(Unit::Px(10)))
-                        .push(
-                            row()
-                                .add_style(Style::Width(Unit::Percent(100.0)))
-                                .add_style(Style::TextAlign(TextAlign::Center))
-                                .add_style(Style::BackgroundColor(
-                                    colors::EERIE_BLACK_DARKER_TRANSPARENT,
-                                ))
-                                .add_style(Style::RoundedEach(Corners::new(
-                                    Unit::Px(0),
-                                    Unit::Px(0),
-                                    Unit::Px(10),
-                                    Unit::Px(10),
-                                )))
-                                .add_style(Style::Padding(Unit::Px(10)))
-                                .push(
-                                    text(&self.description)
-                                        .add_style(Style::Width(Unit::Percent(100.0)))
-                                        .add_style(Style::FontSize(Unit::Px(16)))
-                                        .add_style(Style::FontWeight(FontWeight::Light)),
-                                ),
-                        ),
-                ),
+                row()
+                    .add_styles(&[Style::Width(Unit::Percent(100.0))])
+                    .push(
+                        column()
+                            .add_styles(&[
+                                Style::Width(Unit::Percent(100.0)),
+                                Style::Height(Unit::Px(500)),
+                                Style::BackgroundImage(crate::ui::Image {
+                                    src: self.screenshot.src.to_string(),
+                                    alt: self.screenshot.alt.clone(),
+                                }),
+                                Style::BackgroundSize(BackgroundSize::Cover),
+                                Style::AlignItems(ui::AlignItems::Center),
+                                Style::JustifyContent(ui::JustifyContent::End),
+                                Style::Rounded(Unit::Px(10)),
+                            ])
+                            .push(
+                                row()
+                                    .add_styles(&[
+                                        Style::Width(Unit::Percent(100.0)),
+                                        Style::TextAlign(ui::TextAlign::Center),
+                                        Style::BackgroundColor(
+                                            colors::EERIE_BLACK_DARKER_TRANSPARENT,
+                                        ),
+                                        Style::RoundedEach(Corners::new(
+                                            Unit::Px(0),
+                                            Unit::Px(0),
+                                            Unit::Px(10),
+                                            Unit::Px(10),
+                                        )),
+                                        Style::Padding(Unit::Px(10)),
+                                    ])
+                                    .push(text(&self.description).add_styles(&[
+                                        Style::Width(Unit::Percent(100.0)),
+                                        Style::FontSize(Unit::Px(16)),
+                                        Style::FontWeight(FontWeight::Light),
+                                    ])),
+                            ),
+                    ),
             )
     }
 }
