@@ -1,5 +1,8 @@
+use super::datatypes::Projects;
+use super::datatypes::View;
 use super::theme::*;
 use super::utility::*;
+use crate::custom::api::get_past_projects_data;
 use crate::ui::*;
 use chrono::prelude::*;
 use chrono::{Datelike, Timelike};
@@ -56,4 +59,130 @@ pub fn introduction(title: &str, content: &str, src: &str, alt: &str) -> Element
             Style::FontSize(Unit::Px(18)),
             Style::TextAlign(TextAlign::Justify),
         ])
+}
+
+pub fn page_title(title: &str) -> Element {
+    heading(HeadingLevel::H1, title)
+        .add_styles(&[
+            Style::FontWeight(FontWeight::Light),
+            Style::TextColor(colors::MIDDLE_GREEN),
+            Style::FontSize(Unit::Px(36)),
+        ])
+        .add_hover_style(Style::TextColor(colors::TURQUOISE_GREEN))
+}
+
+pub fn page_header() -> Element {
+    row()
+        .add_styles(&[
+            Style::JustifyContent(JustifyContent::SpaceBetween),
+            Style::Width(Unit::Percent(100.0)),
+            Style::PaddingEach(Sides::new(
+                Unit::Px(5),
+                Unit::Px(5),
+                Unit::Px(20),
+                Unit::Px(20),
+            )),
+            Style::Height(Unit::Percent(100.0)),
+            Style::FontSize(Unit::Px(13)),
+        ])
+        .push(link(page_title("Sashin Dev"), "https://sashin.dev").add_style(Style::NoUnderline))
+        .push(
+            row()
+                .push(header_link("Past Work", "/past-work"))
+                .push(header_link("Skills", "/skills"))
+                .push(header_link("Testimonials", "/testimonials"))
+                .push(header_link("Writing", "/writing"))
+                .push(header_link("Now", "/now")),
+        )
+}
+
+pub fn banner() -> Element {
+    column()
+        .add_styles(&[
+            Style::BackgroundImage(Image {
+                src: "'assets/images/banner.jpg'".to_string(),
+                alt: "banner-image".to_string(),
+            }),
+            Style::Width(Unit::Percent(100.0)),
+            Style::Height(Unit::Px(300)),
+            Style::JustifyContent(JustifyContent::End),
+        ])
+        .push(
+            row()
+                .add_styles(&[
+                    Style::Width(Unit::Percent(100.0)),
+                    Style::BackgroundColor(colors::EERIE_BLACK_DARKER_TRANSPARENT),
+                    Style::PaddingEach(Sides::new(
+                        Unit::Px(20),
+                        Unit::Px(20),
+                        Unit::Px(0),
+                        Unit::Px(0),
+                    )),
+                ])
+                .push(
+                    text("Crafting better software for creators and innovators").add_styles(&[
+                        Style::FontSize(Unit::Px(30)),
+                        Style::FontWeight(FontWeight::ExtraLight),
+                        Style::TextAlign(TextAlign::Center),
+                        Style::Width(Unit::Percent(100.0)),
+                    ]),
+                ),
+        )
+}
+
+pub fn projects_view(projects: Projects) -> Element {
+    row()
+        .add_styles(&[Style::Width(Unit::Percent(100.0))])
+        .push(
+            column()
+                .add_styles(&[
+                    Style::Width(Unit::Percent(100.0)),
+                    Style::AlignItems(AlignItems::Center),
+                    Style::JustifyContent(JustifyContent::Start),
+                ])
+                .push(
+                    row()
+                        .add_styles(&[Style::Width(Unit::Percent(100.0))])
+                        .push(heading(HeadingLevel::H2, "Past Work").add_styles(&[
+                            Style::FontWeight(FontWeight::ExtraLight),
+                            Style::FontSize(Unit::Px(35)),
+                            Style::Height(Unit::Px(20)),
+                        ])),
+                )
+                .push(
+                    row()
+                        .add_styles(&[Style::Width(Unit::Percent(100.0))])
+                        .push(projects.view()),
+                ),
+        )
+}
+
+pub fn content(access_token: &str, space_id: &str) -> Element {
+    const INTRO_TEXT:&'static str = "My name is Sashin, and I help ambitious and creative individuals and organisations design and build their dream websites.\n\nI work directly with clients to bring their vision to life, getting to know them, their mission and brand, and create websites that reflect them.";
+    // following three lets are for testing
+    let past_projects_data =
+        get_past_projects_data(&access_token, &space_id).expect("Failed to get projects data");
+    let projects: Projects = Projects::from_items(&access_token, &space_id, past_projects_data);
+
+    column()
+        .add_styles(&[
+            Style::Width(Unit::Px(768)),
+            Style::Center,
+            Style::BackgroundColor(colors::EERIE_BLACK),
+            Style::RoundedEach(Corners::new(
+                Unit::Px(0),
+                Unit::Px(0),
+                Unit::Px(10),
+                Unit::Px(10),
+            )),
+            Style::Padding(Unit::Px(15)),
+            Style::JustifyContent(JustifyContent::Start),
+        ])
+        .push(introduction(
+            "Rust Developer at your service",
+            &INTRO_TEXT,
+            "assets/images/now-banner.jpg",
+            "Example Banner",
+        ))
+        .push(projects_view(projects))
 }
