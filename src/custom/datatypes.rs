@@ -46,6 +46,15 @@ impl Testimonials {
     }
 }
 
+impl View for Testimonials {
+    fn view(&self) -> Element {
+        self.0
+            .iter()
+            .fold(column(), |mut testimonials_view, testimonial| {
+                testimonials_view.push(testimonial.view())
+            })
+    }
+}
 #[derive(Debug, Clone)]
 pub struct Testimonial {
     author: Person,
@@ -82,11 +91,56 @@ impl Testimonial {
     }
 }
 
+impl View for Testimonial {
+    fn view(&self) -> Element {
+        row()
+            .add_styles(&[
+                Style::MarginEach(Sides::new(
+                    Unit::Px(20),
+                    Unit::Px(20),
+                    Unit::Px(0),
+                    Unit::Px(0),
+                )),
+                Style::Rounded(Unit::Px(10)),
+                Style::BackgroundColor(colors::EERIE_BLACK_LIGHTEST),
+                Style::Padding(Unit::Px(20)),
+            ])
+            .push(
+                column()
+                    .add_styles(&[
+                        Style::Width(Unit::Percent(20.0)),
+                        Style::JustifyContent(JustifyContent::Center),
+                        Style::AlignItems(AlignItems::Center),
+                    ])
+                    .push(
+                        image(&self.author.photo.src.to_string(), &self.author.photo.alt)
+                            .add_styles(&[
+                                Style::Width(Unit::Px(125)),
+                                Style::Height(Unit::Px(125)),
+                                Style::Rounded(Unit::Px(125)),
+                                Style::Center,
+                            ]),
+                    ),
+            )
+            .push(
+                column()
+                    .add_styles(&[
+                        Style::Width(Unit::Percent(80.0)),
+                        Style::FontSize(Unit::Px(20)),
+                        Style::FontWeight(FontWeight::Light),
+                        Style::LineHeight(Unit::Percent(120.0)),
+                    ])
+                    .push(row().push(text(&self.text)))
+                    .push(row().push(text(&self.author.name))),
+            )
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Image {
-    title: String,
-    src: Url,
-    alt: String,
+    pub title: String,
+    pub src: Url,
+    pub alt: String,
 }
 
 impl Image {
@@ -340,7 +394,7 @@ impl View for Project {
 }
 
 #[derive(Debug, Clone)]
-struct Skills(Vec<Skill>);
+pub struct Skills(pub Vec<Skill>);
 
 impl Skills {
     pub fn from_items(access_token: &str, space_id: &str, items: Items) -> Self {
@@ -356,12 +410,12 @@ impl Skills {
 }
 
 #[derive(Debug, Clone)]
-struct Skill {
-    name: String,
-    description: String,
-    thumbnail: Image,
-    about: String,
-    slug: String,
+pub struct Skill {
+    pub name: String,
+    pub description: String,
+    pub thumbnail: Image,
+    pub about: String,
+    pub slug: String,
 }
 
 impl Skill {

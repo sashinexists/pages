@@ -1,8 +1,8 @@
-use super::datatypes::Projects;
-use super::datatypes::View;
+use super::api::get_testimonials_data;
+use super::datatypes::{Projects, Skills, Testimonials, View};
 use super::theme::*;
 use super::utility::*;
-use crate::custom::api::get_past_projects_data;
+use crate::custom::api::{get_past_projects_data, get_skills_data};
 use crate::ui::*;
 use chrono::prelude::*;
 use chrono::{Datelike, Timelike};
@@ -45,11 +45,15 @@ pub fn header_link(label: &str, target: &str) -> Element {
         .add_hover_style(Style::TextColor(colors::PLATINUM))
 }
 
-pub fn introduction(title: &str, content: &str, src: &str, alt: &str) -> Element {
+pub fn introduction() -> Element {
+    const INTRO_TEXT:&'static str = "My name is Sashin, and I help ambitious and creative individuals and organisations design and build their dream websites.\n\nI work directly with clients to bring their vision to life, getting to know them, their mission and brand, and create websites that reflect them.";
     column()
         .push(
             row()
-                .push(text(content).add_styles(&[Style::Width(Unit::Percent(100.0))]))
+                .push(text(INTRO_TEXT).add_styles(&[
+                    Style::Width(Unit::Percent(100.0)),
+                    Style::LineHeight(Unit::Percent(150.0)),
+                ]))
                 .add_styles(&[Style::Width(Unit::Percent(100.0))]),
         )
         .add_styles(&[
@@ -130,6 +134,28 @@ pub fn banner() -> Element {
         )
 }
 
+pub fn skills_bar(skills: Skills) -> Element {
+    skills
+        .0
+        .iter()
+        .fold(row(), |mut skills_bar, skill| {
+            skills_bar.push(
+                image(&skill.thumbnail.src.to_string(), &skill.thumbnail.alt).add_styles(&[
+                    Style::Height(Unit::Px(50)),
+                    Style::Width(Unit::Px(50)),
+                    Style::Padding(Unit::Px(5)),
+                ]),
+            )
+        })
+        .add_styles(&[
+            Style::Padding(Unit::Px(5)),
+            Style::Rounded(Unit::Px(10)),
+            Style::BackgroundColor(colors::EERIE_BLACK_LIGHTEST),
+            Style::Width(Unit::Percent(100.0)),
+            Style::JustifyContent(JustifyContent::SpaceEvenly),
+        ])
+}
+
 pub fn projects_view(projects: Projects) -> Element {
     row()
         .add_styles(&[Style::Width(Unit::Percent(100.0))])
@@ -157,9 +183,39 @@ pub fn projects_view(projects: Projects) -> Element {
         )
 }
 
+pub fn testimonials_view(testimonials: Testimonials) -> Element {
+    row()
+        .add_styles(&[Style::Width(Unit::Percent(100.0))])
+        .push(
+            column()
+                .add_styles(&[
+                    Style::Width(Unit::Percent(100.0)),
+                    Style::AlignItems(AlignItems::Center),
+                    Style::JustifyContent(JustifyContent::Start),
+                ])
+                .push(
+                    row()
+                        .add_styles(&[Style::Width(Unit::Percent(100.0))])
+                        .push(heading(HeadingLevel::H2, "Testimonials").add_styles(&[
+                            Style::FontWeight(FontWeight::ExtraLight),
+                            Style::FontSize(Unit::Px(35)),
+                            Style::Height(Unit::Px(20)),
+                        ])),
+                )
+                .push(
+                    row()
+                        .add_styles(&[Style::Width(Unit::Percent(100.0))])
+                        .push(testimonials.view()),
+                ),
+        )
+}
+
 pub fn content(access_token: &str, space_id: &str) -> Element {
-    const INTRO_TEXT:&'static str = "My name is Sashin, and I help ambitious and creative individuals and organisations design and build their dream websites.\n\nI work directly with clients to bring their vision to life, getting to know them, their mission and brand, and create websites that reflect them.";
-    // following three lets are for testing
+    let skills_data = get_skills_data(&access_token, &space_id).expect("Failed to get skills data");
+    let skills = Skills::from_items(&access_token, &space_id, skills_data);
+    let testimonials_data =
+        get_testimonials_data(&access_token, &space_id).expect("Failed to get skills data");
+    let testimonials = Testimonials::from_items(&access_token, &space_id, testimonials_data);
     let past_projects_data =
         get_past_projects_data(&access_token, &space_id).expect("Failed to get projects data");
     let projects: Projects = Projects::from_items(&access_token, &space_id, past_projects_data);
@@ -178,11 +234,8 @@ pub fn content(access_token: &str, space_id: &str) -> Element {
             Style::Padding(Unit::Px(15)),
             Style::JustifyContent(JustifyContent::Start),
         ])
-        .push(introduction(
-            "Rust Developer at your service",
-            &INTRO_TEXT,
-            "assets/images/now-banner.jpg",
-            "Example Banner",
-        ))
+        .push(introduction())
+        .push(skills_bar(skills))
+        .push(testimonials_view(testimonials))
         .push(projects_view(projects))
 }
