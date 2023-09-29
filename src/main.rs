@@ -16,14 +16,18 @@ fn main() {
     let access_token = env::var("CONTENTFUL_CONTENT_DELIVERY_API_ACCESS_TOKEN")
         .expect("CONTENTFUL_ACCESS_TOKEN not found");
     let space_id = env::var("CONTENTFUL_SPACE_ID").expect("CONTENTFUL_SPACE_ID not found");
-    let mut pages = Pages::new();
-    let home = (Page::new("Sashin Dev", ".public/index.html", PageData::None)).add_styles(&[
+
+    const GLOBAL_STYLES: &[Style] = &[
         Style::BackgroundColor(colors::RICH_BLACK),
         Style::Margin(Unit::Px(0)),
         Style::Width(Unit::Percent(100.0)),
-        Style::Font("Ubuntu".to_string()),
+        Style::Font("Ubuntu"),
         Style::TextColor(colors::DARK_MEDIUM_GRAY),
-    ]);
+    ];
+
+    let home = Page::new("Sashin Dev", ".public/index.html", PageData::None);
+
+    let mut site = Site::new(home, "Sashin Dev");
 
     let main = column()
         .add_style(Style::Center)
@@ -32,7 +36,8 @@ fn main() {
         .push(content(&access_token, &space_id))
         .push(footer());
 
-    let home = home.push(main);
-    pages.add(home);
-    pages.publish();
+    // let home = home.push(main);
+    site.home.push(main);
+    site.add_global_styles(GLOBAL_STYLES);
+    site.publish();
 }

@@ -9,8 +9,32 @@ use crate::{
 pub struct Site {
     pub pages: Pages,
     pub title: String,
-    pub index: Page,
+    pub home: Page,
     pub global_styles: Vec<Style>,
+}
+
+impl Site {
+    pub fn new(home: Page, title: &str) -> Self {
+        Self {
+            pages: Pages(vec![]),
+            title: title.to_string(),
+            home,
+            global_styles: Vec::new(),
+        }
+    }
+
+    pub fn add_global_styles(&mut self, styles: &[Style]) {
+        self.global_styles.extend_from_slice(styles);
+        self.home.add_styles(styles);
+        self.pages.0.iter_mut().for_each(|page| {
+            page.add_styles(styles);
+        });
+    }
+
+    pub fn publish(&self) {
+        self.pages.publish();
+        self.home.publish();
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -78,9 +102,14 @@ impl Page {
         println!("Successfully published css for page {}", self.title);
     }
 
-    pub fn push(mut self, element: Element) -> Self {
+    pub fn publish(&self) {
+        self.write_html();
+        self.write_css();
+    }
+
+    pub fn push(&mut self, element: Element) -> Self {
         self.content.push(element);
-        self
+        self.clone()
     }
 
     pub fn push_elements(mut self, elements: Vec<Element>) -> Self {
@@ -144,14 +173,14 @@ impl Page {
         self
     }
 
-    pub fn add_styles(mut self, styles: &[Style]) -> Self {
+    pub fn add_styles(&mut self, styles: &[Style]) -> Self {
         self.styles.extend(
             styles
                 .iter()
                 .map(|style| style.clone())
                 .collect::<Vec<Style>>(),
         );
-        self
+        self.clone()
     }
 
     fn to_html(&self) -> String {

@@ -181,7 +181,7 @@ pub enum Style {
     MaxWidth(Unit),
     Height(Unit),
     MaxHeight(Unit),
-    Font(String),
+    Font(&'static str),
     FontWeight(FontWeight),
     FontSize(Unit),
     AlignItems(AlignItems),

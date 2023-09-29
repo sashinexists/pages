@@ -102,22 +102,25 @@ impl View for Testimonial {
                     Unit::Px(0),
                 )),
                 Style::Rounded(Unit::Px(10)),
-                Style::BackgroundColor(colors::EERIE_BLACK_LIGHTEST),
+                Style::BackgroundColor(colors::EERIE_BLACK_LIGHTER),
                 Style::Padding(Unit::Px(20)),
+                Style::JustifyContent(JustifyContent::SpaceBetween),
+                Style::Height(Unit::Px(240)),
             ])
             .push(
                 column()
                     .add_styles(&[
                         Style::Width(Unit::Percent(20.0)),
+                        Style::Height(Unit::Percent(100.0)),
                         Style::JustifyContent(JustifyContent::Center),
                         Style::AlignItems(AlignItems::Center),
                     ])
                     .push(
                         image(&self.author.photo.src.to_string(), &self.author.photo.alt)
                             .add_styles(&[
-                                Style::Width(Unit::Px(125)),
-                                Style::Height(Unit::Px(125)),
-                                Style::Rounded(Unit::Px(125)),
+                                Style::Width(Unit::Px(120)),
+                                Style::Height(Unit::Px(120)),
+                                Style::Rounded(Unit::Px(120)),
                                 Style::Center,
                             ]),
                     ),
@@ -125,13 +128,81 @@ impl View for Testimonial {
             .push(
                 column()
                     .add_styles(&[
-                        Style::Width(Unit::Percent(80.0)),
-                        Style::FontSize(Unit::Px(20)),
-                        Style::FontWeight(FontWeight::Light),
-                        Style::LineHeight(Unit::Percent(120.0)),
+                        Style::Width(Unit::Percent(75.0)),
+                        Style::Height(Unit::Percent(100.0)),
+                        Style::JustifyContent(JustifyContent::Center),
+                        Style::MarginEach(Sides::new(
+                            Unit::Px(0),
+                            Unit::Px(0),
+                            Unit::Percent(0.0),
+                            Unit::Px(0),
+                        )),
                     ])
-                    .push(row().push(text(&self.text)))
-                    .push(row().push(text(&self.author.name))),
+                    .push(
+                        row()
+                            .add_styles(&[
+                                Style::MarginEach(Sides::new(
+                                    Unit::Px(5),
+                                    Unit::Px(5),
+                                    Unit::Px(0),
+                                    Unit::Px(0),
+                                )),
+                                Style::FontSize(Unit::Px(20)),
+                                Style::FontWeight(FontWeight::Light),
+                                Style::LineHeight(Unit::Percent(120.0)),
+                                Style::Width(Unit::Percent(100.0)),
+                                Style::TextAlign(TextAlign::Left),
+                                Style::JustifyContent(JustifyContent::Start),
+                            ])
+                            .push(text(&self.text)),
+                    )
+                    .push(
+                        column()
+                            .add_styles(&[
+                                Style::MarginEach(Sides::new(
+                                    Unit::Px(5),
+                                    Unit::Px(5),
+                                    Unit::Px(0),
+                                    Unit::Px(0),
+                                )),
+                                Style::JustifyContent(JustifyContent::Start),
+                                Style::Width(Unit::Percent(100.0)),
+                            ])
+                            .push(
+                                row()
+                                    .add_styles(&[
+                                        Style::MarginEach(Sides::new(
+                                            Unit::Px(5),
+                                            Unit::Px(2),
+                                            Unit::Px(0),
+                                            Unit::Px(0),
+                                        )),
+                                        Style::FontSize(Unit::Px(15)),
+                                        Style::FontWeight(FontWeight::Normal),
+                                        Style::LineHeight(Unit::Percent(120.0)),
+                                        Style::Width(Unit::Percent(100.0)),
+                                        Style::TextAlign(TextAlign::Left),
+                                        Style::JustifyContent(JustifyContent::Start),
+                                    ])
+                                    .push(text(&self.author.name)),
+                            )
+                            .push(
+                                row()
+                                    .add_styles(&[
+                                        Style::FontSize(Unit::Px(12)),
+                                        Style::FontWeight(FontWeight::Normal),
+                                        Style::LineHeight(Unit::Percent(120.0)),
+                                        Style::Width(Unit::Percent(100.0)),
+                                        Style::TextAlign(TextAlign::Left),
+                                        Style::JustifyContent(JustifyContent::Start),
+                                    ])
+                                    .push(text(
+                                        &(self.author.title.clone()
+                                            + ", "
+                                            + &self.author.organisation),
+                                    )),
+                            ),
+                    ),
             )
     }
 }

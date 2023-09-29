@@ -150,7 +150,7 @@ pub fn skills_bar(skills: Skills) -> Element {
         .add_styles(&[
             Style::Padding(Unit::Px(5)),
             Style::Rounded(Unit::Px(10)),
-            Style::BackgroundColor(colors::EERIE_BLACK_LIGHTEST),
+            Style::BackgroundColor(colors::EERIE_BLACK_LIGHTER),
             Style::Width(Unit::Percent(100.0)),
             Style::JustifyContent(JustifyContent::SpaceEvenly),
         ])
@@ -234,6 +234,7 @@ pub fn content(access_token: &str, space_id: &str) -> Element {
             Style::Padding(Unit::Px(15)),
             Style::JustifyContent(JustifyContent::Start),
         ])
+        .push(footer())
         .push(introduction())
         .push(skills_bar(skills))
         .push(testimonials_view(testimonials))
