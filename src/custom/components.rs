@@ -7,6 +7,23 @@ use crate::ui::*;
 use chrono::prelude::*;
 use chrono::{Datelike, Timelike};
 use chrono_tz::Australia::Sydney;
+
+pub fn home_page_template(content: Element) -> Element {
+    column()
+        .add_style(Style::Center)
+        .push(page_header())
+        .push(banner())
+        .push(content)
+        .push(footer())
+}
+pub fn page_template(content: Element) -> Element {
+    column()
+        .add_style(Style::Center)
+        .push(page_header())
+        .push(page_content().push(content))
+        .push(footer())
+}
+
 pub fn footer() -> Element {
     let utc_now = chrono::Utc::now().naive_utc();
     let sydney_now = Sydney.from_utc_datetime(&utc_now);
@@ -219,7 +236,6 @@ pub fn content(access_token: &str, space_id: &str) -> Element {
     let past_projects_data =
         get_past_projects_data(&access_token, &space_id).expect("Failed to get projects data");
     let projects: Projects = Projects::from_items(&access_token, &space_id, past_projects_data);
-
     column()
         .add_styles(&[
             Style::Width(Unit::Px(768)),
@@ -239,4 +255,20 @@ pub fn content(access_token: &str, space_id: &str) -> Element {
         .push(skills_bar(skills))
         .push(testimonials_view(testimonials))
         .push(projects_view(projects))
+}
+
+pub fn page_content() -> Element {
+    column().add_styles(&[
+        Style::Width(Unit::Px(768)),
+        Style::Center,
+        Style::BackgroundColor(colors::EERIE_BLACK),
+        Style::RoundedEach(Corners::new(
+            Unit::Px(10),
+            Unit::Px(10),
+            Unit::Px(10),
+            Unit::Px(10),
+        )),
+        Style::Padding(Unit::Px(15)),
+        Style::JustifyContent(JustifyContent::Start),
+    ])
 }

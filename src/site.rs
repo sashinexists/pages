@@ -1,4 +1,8 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs::{self, remove_file, OpenOptions},
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use crate::{
     custom::datatypes::PageData,
@@ -32,8 +36,24 @@ impl Site {
     }
 
     pub fn publish(&self) {
+        Self::delete_css();
         self.pages.publish();
         self.home.publish();
+    }
+
+    pub fn delete_css() {
+        let path = ".public/style.css";
+
+        if Path::new(&path).exists() {
+            remove_file(path).expect("Failed to remove file from {path}");
+            println!("File deleted.");
+        } else {
+            println!("File does not exist, skipping.");
+        };
+    }
+
+    pub fn add_page(&mut self, page: Page) {
+        self.pages.0.push(page);
     }
 }
 
@@ -98,7 +118,14 @@ impl Page {
 
     fn write_css(&self) {
         let css = self.get_css();
-        fs::write(".public/style.css", css).expect(&format!("Failed to write stylesheet"));
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .create(true)
+            .open(".public/style.css")
+            .expect("Failed to create or open file");
+        // fs::write(".public/style.css", css).expect(&format!("Failed to write stylesheet"));
+        writeln!(file, "{}", css).expect("Failed to write to css file");
         println!("Successfully published css for page {}", self.title);
     }
 
