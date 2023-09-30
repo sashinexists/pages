@@ -1,5 +1,5 @@
 use super::api::get_testimonials_data;
-use super::datatypes::{Projects, Skills, Testimonials, View};
+use super::datatypes::{Home, Projects, Skills, Testimonials, View};
 use super::theme::*;
 use super::utility::*;
 use crate::custom::api::{get_past_projects_data, get_skills_data};
@@ -151,7 +151,7 @@ pub fn banner() -> Element {
         )
 }
 
-pub fn skills_bar(skills: Skills) -> Element {
+pub fn skills_bar(skills: &Skills) -> Element {
     skills
         .0
         .iter()
@@ -173,7 +173,7 @@ pub fn skills_bar(skills: Skills) -> Element {
         ])
 }
 
-pub fn projects_view(projects: Projects) -> Element {
+pub fn projects_view(projects: &Projects) -> Element {
     row()
         .add_styles(&[Style::Width(Unit::Percent(100.0))])
         .push(
@@ -200,7 +200,7 @@ pub fn projects_view(projects: Projects) -> Element {
         )
 }
 
-pub fn testimonials_view(testimonials: Testimonials) -> Element {
+pub fn testimonials_view(testimonials: &Testimonials) -> Element {
     row()
         .add_styles(&[Style::Width(Unit::Percent(100.0))])
         .push(
@@ -227,15 +227,7 @@ pub fn testimonials_view(testimonials: Testimonials) -> Element {
         )
 }
 
-pub fn content(access_token: &str, space_id: &str) -> Element {
-    let skills_data = get_skills_data(&access_token, &space_id).expect("Failed to get skills data");
-    let skills = Skills::from_items(&access_token, &space_id, skills_data);
-    let testimonials_data =
-        get_testimonials_data(&access_token, &space_id).expect("Failed to get skills data");
-    let testimonials = Testimonials::from_items(&access_token, &space_id, testimonials_data);
-    let past_projects_data =
-        get_past_projects_data(&access_token, &space_id).expect("Failed to get projects data");
-    let projects: Projects = Projects::from_items(&access_token, &space_id, past_projects_data);
+pub fn content(model: &Home) -> Element {
     column()
         .add_styles(&[
             Style::Width(Unit::Px(768)),
@@ -252,9 +244,9 @@ pub fn content(access_token: &str, space_id: &str) -> Element {
         ])
         .push(footer())
         .push(introduction())
-        .push(skills_bar(skills))
-        .push(testimonials_view(testimonials))
-        .push(projects_view(projects))
+        .push(skills_bar(&model.skills))
+        .push(testimonials_view(&model.testimonials))
+        .push(projects_view(&model.past_projects))
 }
 
 pub fn page_content() -> Element {

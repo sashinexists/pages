@@ -24,15 +24,31 @@ pub trait View {
 
 #[derive(Debug, Clone)]
 pub struct Home {
-    testimonials: Testimonials,
-    past_projects: Projects,
-    skills: Skills,
+    pub testimonials: Testimonials,
+    pub past_projects: Projects,
+    pub skills: Skills,
+}
+
+impl Home {
+    pub fn new(access_token: &str, space_id: &str) -> Self {
+        Self {
+            testimonials: Testimonials::new(access_token, space_id),
+            past_projects: Projects::new(access_token, space_id),
+            skills: Skills::new(access_token, space_id),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct Testimonials(Vec<Testimonial>);
 
 impl Testimonials {
+    pub fn new(access_token: &str, space_id: &str) -> Self {
+        let items = get_testimonials_data(access_token, space_id)
+            .expect("Failed to get testimonials data from contentful");
+        Self::from_items(access_token, space_id, items)
+    }
+
     pub fn from_items(access_token: &str, space_id: &str, items: Items) -> Self {
         let testimonials: Vec<Testimonial> = items
             .items
@@ -284,6 +300,11 @@ impl Person {
 pub struct Projects(Vec<Project>);
 
 impl Projects {
+    pub fn new(access_token: &str, space_id: &str) -> Self {
+        let items = get_past_projects_data(access_token, space_id)
+            .expect("Failed to get past projects data from contentful");
+        Self::from_items(access_token, space_id, items)
+    }
     pub fn from_items(access_token: &str, space_id: &str, items: Items) -> Self {
         let items = items
             .items
@@ -468,6 +489,11 @@ impl View for Project {
 pub struct Skills(pub Vec<Skill>);
 
 impl Skills {
+    pub fn new(access_token: &str, space_id: &str) -> Self {
+        let items = get_skills_data(access_token, space_id)
+            .expect("Failed to get skills data from contentful");
+        Self::from_items(access_token, space_id, items)
+    }
     pub fn from_items(access_token: &str, space_id: &str, items: Items) -> Self {
         let items = items
             .items
