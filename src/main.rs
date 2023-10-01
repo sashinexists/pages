@@ -13,7 +13,7 @@ pub mod site;
 use site::*;
 
 use crate::custom::api::{get_past_projects_data, get_skills_data, get_testimonials_data};
-use crate::custom::datatypes::{Home, Projects, Skills, Testimonials};
+use crate::custom::datatypes::Home;
 use crate::custom::pages;
 fn main() {
     dotenv().expect("Failed to read .env file"); // This line loads the .env file into environment variables
